@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Deck title goes here</title>
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   SLIDE SYSTEM · v1
+   每个数值都是推出来的，不是选的。详见 RULES.md。
+
+   要改整套尺寸：只改 §2 的 --u 一行，§3 §4 全部跟着变。
+   注意：--u 变了，正文区容量（§6）要重算。
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root{
+
+  /* ── §2 基准单位 ──────────────────────────────────────────────────────
+     u 由场地决定，不由审美决定：                                     */
+  --u: 25px;          /* = 7.447 × D / W，D=最远座位 8m，W=屏宽 2.4m     */
+
+  /* ── §3 字号：等比数列，公比 1.2ⁿ，基准 u ──────────────────────────── */
+  --fs-cover:  calc(var(--u) * 3.00);    /* n=+6   75px  封面主标题       */
+  --fs-h1:     calc(var(--u) * 2.07);    /* n=+4   52px  页面主标题       */
+  --fs-quote:  calc(var(--u) * 1.44);    /* n=+2   36px  落点句           */
+  --fs-lead:   calc(var(--u) * 1.20);    /* n=+1   30px  导语             */
+  --fs-key:    calc(var(--u) * 1.20);    /* n=+1   30px  条目表关键词     */
+  --fs-body:   var(--u);                 /* n= 0   25px  正文 —— 下限     */
+  --fs-note:   calc(var(--u) * 0.83);    /* n=-1   21px  注解 / 代价说明  */
+  --fs-kicker: calc(var(--u) * 0.69);    /* n=-2   17px  小节标签         */
+  --fs-foot:   calc(var(--u) * 0.58);    /* n=-3   14px  页脚 / 页码      */
+
+  /* ── 行高 ──────────────────────────────────────────────────────────── */
+  --lh-tight: 1.16;
+  --lh-body:  1.60;
+  --lh-quote: 1.50;
+
+  /* ── §4 间距：全是 u 的倍数，没有第二个基准单位 ────────────────────── */
+  --pad-x:     calc(var(--u) * 3);       /* 75px   左右页边距             */
+  --pad-t:     calc(var(--u) * 1.75);    /* 43.8px 上边距                 */
+  --pad-b:     calc(var(--u) * 1.25);    /* 31.3px 下边距                 */
+  --gap:       var(--u);                 /* 25px   原型内部间距           */
+  --gap-frame: calc(var(--u) * 0.75);    /* 18.8px 骨架块间距 ← 骨架必须  */
+                                         /*        比原型内部紧，否则     */
+                                         /*        框架会吃光正文区       */
+  --gap-tight: calc(var(--u) * 0.5);     /* 12.5px 紧凑间距               */
+
+  /* ── §5 颜色：对比度全部实测过，不许凭眼睛改 ───────────────────────── */
+  --paper:      #ffffff;
+  --ink:        #101010;   /* 19.03:1  标题与正文                       */
+  --ink2:       #454545;   /*  9.59:1  次级文字                         */
+  --muted:      #767676;   /*  4.54:1  ← 最浅的合格灰，不能再浅         */
+  --line:       #d0d0d0;   /*  1.54:1  ← 分隔线门槛，再浅投影上会消失   */
+  --accent:     #a70e13;   /*  7.73:1  芯原红（verisilicon.com 主色，       */
+                           /*           logo 实测 #a80800，同一色）         */
+  --accent-bg:  #f5dfe0;   /*  1.27:1  ← 浅红底，再浅看不出是块底色         */
+
+  /* ── 深色场景（仅当 deck 需要装深色截图，见 I4）─────────────────────
+     只换令牌，不动任何页面结构。                                      */
+  --paper-d:    #12151a;
+  --ink-d:      #e9ecef;   /* 15.43:1 */
+  --ink2-d:     #b6bec9;   /*  9.76:1 */
+  --muted-d:    #8f9aa8;   /*  6.41:1 */
+  --line-d:     #343a44;   /*  1.60:1 */
+  --accent-d:   #ee4248;   /*  4.80:1  ← #a70e13 在深底上只有 2.37:1，      */
+                           /*             必须换提亮版才能当文字色          */
+  --accent-bg-d:#442427;   /*  1.33:1  ← 与浅色底同级的可见度               */
+
+  /* ── §1 画布 ──────────────────────────────────────────────────────── */
+  --stage-w: 1280px;       /* 1280 ÷ 96dpi = 13.333in = 960pt           */
+  --stage-h: 720px;        /*  720 ÷ 96dpi =  7.500in = 540pt           */
+  --canvas-bg: #e8e8e8;    /* 舞台外的留白，不投影，只影响编辑时观感    */
+
+  /* ── §3 字体：两个栈，不是「一个衬线一个无衬线」─────────────────
+     中文不能落进衬线（宋体小字号投影会糊）。所以标题栈必须写成
+     「拉丁取衬线 → 中文回退到黑体」，只写 serif 会让中文静默变宋体。 */
+  --font-title: Georgia, "Times New Roman",
+                "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                "Helvetica Neue", Arial, sans-serif;
+  --font-body:  "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                "Helvetica Neue", Arial, sans-serif;
+
+  /* ── 演讲者 UI 令牌（不受 u 控制）───────────────────────────────
+     备注 / 帮助面板不在 1280×720 舞台里，是 1:1 屏幕像素，
+     所以它们用固定 px，不跟 --u 缩放。颜色仍要走令牌。 */
+  --ui-bg:    #ffffff;
+  --ui-inner: #f4f4f4;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   引擎 —— 原样保留，不需要改
+   ════════════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--canvas-bg);font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+b,strong{font-weight:600}
+
+#stage{position:absolute;left:50%;top:50%;width:var(--stage-w);height:var(--stage-h);
+  transform:translate(-50%,-50%) scale(1);transform-origin:center center}
+
+.slide{
+  position:absolute;inset:0;width:var(--stage-w);height:var(--stage-h);
+  background:var(--paper);color:var(--ink);
+  padding:var(--pad-t) var(--pad-x) var(--pad-b);
+  display:none;flex-direction:column;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+.slide.dark{
+  --paper:var(--paper-d); --ink:var(--ink-d); --ink2:var(--ink2-d);
+  --muted:var(--muted-d); --line:var(--line-d);
+  --accent:var(--accent-d); --accent-bg:var(--accent-bg-d)}
+
+/* ════════════════════════════════════════════════════════════════════════
+   §4 页面骨架 —— 六个固定锚点，只有 ④ 伸缩
+   ════════════════════════════════════════════════════════════════════════ */
+.head{display:flex;align-items:center;gap:var(--gap-tight);
+  flex:none;margin-bottom:calc(var(--u) * 1.5)}                 /* ① 页眉   */
+.kicker{font-size:var(--fs-kicker);letter-spacing:.20em;color:var(--accent);
+  font-weight:600;white-space:nowrap;text-transform:uppercase}
+.hline{flex:1;height:1px;background:var(--line)}
+
+h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tight);
+  font-weight:700;letter-spacing:-.005em;flex:none;
+  margin-bottom:var(--gap-frame)}                               /* ② 主标题 */
+.lead{font-size:var(--fs-lead);line-height:var(--lh-body);color:var(--ink2);
+  flex:none;margin-bottom:var(--gap-frame);max-width:calc(var(--u) * 44)}  /* ③ 导语 */
+.body{flex:1;min-height:0;overflow:hidden}                      /* ④ 正文区 */
+/* ⚠️ flex:1 意味着内容超量时不会把页脚顶下去，而是直接压在落点句上。
+   overflow:hidden 把它变成裁切而不是重叠；真正的防线是 check.py。 */
+
+.quote{flex:none;margin-top:var(--gap-frame);border-left:calc(var(--u) * 0.16) solid var(--accent);
+  padding:calc(var(--u)*0.08) 0 calc(var(--u)*0.08) calc(var(--u) * 0.96);  /* ⑤ 落点句 */
+  font-size:var(--fs-quote);line-height:var(--lh-quote);font-weight:600}
+
+.foot{flex:none;margin-top:var(--gap-frame);padding-top:var(--gap-tight);
+  border-top:1px solid var(--line);                             /* ⑥ 页脚   */
+  display:flex;align-items:baseline;gap:var(--gap-tight);
+  font-size:var(--fs-foot);color:var(--muted);letter-spacing:.06em}
+.foot .ftitle{flex:1;text-align:center}
+.foot .pno{font-family:var(--font-title);color:var(--ink2);letter-spacing:.04em}
+
+/* ════════════════════════════════════════════════════════════════════════
+   §6 原型 —— 一个标准页 = 骨架 ＋ 任意一种
+   正文区容量见文件末尾的实测值
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── 编号条目表 ───────────────────────────────────────────────────────── */
+.rows{border-top:1px solid var(--line)}
+.row{display:flex;align-items:baseline;gap:var(--gap);
+  padding:calc(var(--u)*0.44) var(--gap-tight) calc(var(--u)*0.44) calc(var(--u)*0.16);
+  border-bottom:1px solid var(--line)}   /* 0.44u 而非 0.5u：给 4 行留出余量 */
+/* 字号纪律：只能用 §3 阶梯上的值（1.2ⁿ）。
+   下标里原来的 0.76u / 0.84u / 0.6u / 0.52u / 0.48u 都是阶梯外的
+   中间值，等于绕过了字号系统 —— 全部换成命名令牌。 */
+.row .n{font-family:var(--font-title);font-size:var(--fs-kicker);   /* 三级·编号 */
+  color:var(--accent);width:calc(var(--u) * 1.52);flex:none}
+.row .k{font-size:var(--fs-key);font-weight:600;width:calc(var(--u) * 5.6);
+  flex:none;line-height:1.12}
+.row .k small{display:block;font-family:var(--font-title);          /* 三级·小注 */
+  font-size:var(--fs-foot);font-weight:400;color:var(--muted);
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-top:calc(var(--u)*0.04);line-height:1.1}
+.row .v{font-size:var(--fs-body);color:var(--ink2);line-height:1.45} /* 一级·内容 */
+
+/* 强调行：只靠底色就够。
+   品牌红 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
+   但仍然不用 —— 一块底色已经把话说完了，再加红字是重复强调。 */
+.row.hi{background:var(--accent-bg);border-bottom-color:var(--accent-bg)}
+
+/* ── 三条论点 ─────────────────────────────────────────────────────────── */
+.args{display:flex;flex-direction:column}
+.arg{display:flex;align-items:baseline;gap:var(--gap);
+  padding:calc(var(--u) * 0.68) 0;border-bottom:1px solid var(--line);
+  font-size:var(--fs-body);line-height:1.5}
+.arg:first-child{border-top:1px solid var(--line)}
+.arg .an{font-family:var(--font-title);font-size:var(--fs-kicker);
+  color:var(--accent);flex:none;width:calc(var(--u) * 1.04)}
+.arg .at{flex:1;color:var(--ink2)}
+.args.tight .arg{padding:calc(var(--u) * 0.40) 0}   /* 放 5 条时用，字号不动 */
+.caveat{flex:none;margin-top:calc(var(--u) * 0.8);
+  font-size:var(--fs-note);color:var(--muted);line-height:1.55}
+
+/* ── 两栏对照 ─────────────────────────────────────────────────────────── */
+.pair{display:flex}
+.pair .col{flex:1;padding:calc(var(--u)*0.16) calc(var(--u)*1.6) calc(var(--u)*0.16) 0}
+.pair .col+.col{border-left:1px solid var(--line);
+  padding-left:calc(var(--u)*1.6);padding-right:0}
+.pair .lab{font-size:var(--fs-foot);letter-spacing:.16em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:calc(var(--u)*0.56);font-weight:600}
+.pair .val{font-size:var(--fs-lead);line-height:1.5;color:var(--ink)}
+.pair .col.acc .lab{color:var(--accent)}
+.pair .col.acc .val{font-weight:600}
+
+/* ── 循环图 ───────────────────────────────────────────────────────────── */
+.loop{width:calc(var(--u) * 36);margin:calc(var(--u)*0.24) auto 0}
+.lrow{display:flex;width:calc(var(--u) * 28.8);margin:0 auto}
+.lnode{width:calc(var(--u) * 8);flex:none;text-align:center;
+  padding:calc(var(--u)*0.64) calc(var(--u)*0.32) calc(var(--u)*0.56);
+  border:1px solid var(--line);border-top:calc(var(--u)*0.12) solid var(--accent)}
+.lnode .ln{display:block;font-size:var(--fs-key);font-weight:600}
+.lnode .ls{display:block;font-size:var(--fs-note);color:var(--muted);
+  margin-top:calc(var(--u)*0.28);line-height:1.4}
+.larr{width:calc(var(--u) * 2.4);flex:none;display:flex;align-items:center;
+  justify-content:center;color:var(--accent);font-size:var(--fs-note);line-height:1}
+.lback{height:calc(var(--u) * 2.24);margin:0 calc(var(--u) * 7.6);position:relative;
+  border-left:1.5px solid var(--accent);border-right:1.5px solid var(--accent);
+  border-bottom:1.5px solid var(--accent);
+  display:flex;align-items:flex-end;justify-content:center}
+/* 箭头几何全部随 u 走 —— 原来写死的 -5.25/6/9px 会在改 --u 时错位，
+   破坏「改一行全跟着变」这个承诺。 */
+.lback::before{content:"";position:absolute;top:-1px;
+  left:calc(var(--u) * -0.21);
+  border-left:calc(var(--u) * 0.24) solid transparent;
+  border-right:calc(var(--u) * 0.24) solid transparent;
+  border-bottom:calc(var(--u) * 0.36) solid var(--accent)}
+.lback span{background:var(--paper);padding:0 calc(var(--u)*0.72);
+  font-size:var(--fs-note);color:var(--accent);
+  transform:translateY(50%);letter-spacing:.03em;white-space:nowrap}
+.lnote{margin-top:calc(var(--u)*1.2);
+  padding-left:calc(var(--u)*0.96);border-left:calc(var(--u)*0.16) solid var(--accent);
+  font-size:var(--fs-note);color:var(--ink2);line-height:1.6}
+
+/* ── 封面 ─────────────────────────────────────────────────────────────── */
+.cover{padding:calc(var(--u)*3.84) var(--pad-x) var(--pad-b)}
+.cover .ctop{flex:none;width:calc(var(--u)*3.44);height:calc(var(--u)*0.2);
+  background:var(--accent);margin-bottom:calc(var(--u)*2.08)}
+.cover h1{font-size:var(--fs-cover);line-height:1.1;
+  margin-bottom:calc(var(--u)*1.2);letter-spacing:-.012em}
+.cover .sub{font-size:var(--fs-lead);color:var(--ink2);
+  line-height:1.58;max-width:calc(var(--u)*37)}
+.cover .ctag{flex:1;display:flex;align-items:flex-end;
+  font-size:var(--fs-kicker);letter-spacing:.16em;color:var(--muted);
+  text-transform:uppercase}
+
+/* ── 收尾 ─────────────────────────────────────────────────────────────── */
+.end .args .arg{border-bottom:none;padding:calc(var(--u)*0.76) 0}
+.end .args .arg:first-child{border-top:1px solid var(--line)}
+.end .args .arg .at{font-size:var(--fs-lead);color:var(--ink)}
+
+/* ── 截图位（深色页用）───────────────────────────────────────────────── */
+.shot{border:1px solid var(--line);display:flex;align-items:center;
+  justify-content:center;color:var(--muted);font-size:var(--fs-kicker);
+  letter-spacing:.04em;flex:1;overflow:hidden}
+.shot img{width:100%;height:100%;object-fit:contain;display:block}
+
+/* ════════════════════════════════════════════════════════════════════════
+   备注 / 帮助 / 进度条
+   ════════════════════════════════════════════════════════════════════════ */
+/* 尺寸用固定 px：这是演讲者 UI，不在舞台里，不跟 --u 缩放。
+   但颜色必须走令牌 —— 否则换品牌色时这里会静默漏掉。 */
+#notes{position:fixed;left:0;right:0;bottom:0;background:var(--ui-bg);
+  border-top:1px solid var(--line);padding:18px 26px;font-size:15px;line-height:1.6;
+  color:var(--ink2);display:none;z-index:40;max-height:38vh;overflow:auto}
+#notes.on{display:block}
+#notes b{color:var(--accent);font-weight:600;margin-right:8px;letter-spacing:.08em}
+#help{position:fixed;inset:0;background:rgba(255,255,255,.97);z-index:60;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{border-top:3px solid var(--accent);padding-top:26px;width:620px;
+  font-size:16px;line-height:2.1;color:var(--ink2)}
+#help kbd{font-family:var(--font-title);background:var(--ui-inner);
+  border:1px solid var(--line);
+  padding:1px 8px;margin-right:10px;font-size:13px;color:var(--ink)}
+.chrome{position:fixed;left:0;top:0;height:2px;background:var(--accent);
+  width:0;z-index:50;transition:width .18s ease}
+@media (prefers-reduced-motion:reduce){.chrome{transition:none}}
+
+/* ════════════════════════════════════════════════════════════════════════
+   §8 导出 PDF —— 不许出现 box-shadow / gradient（软掩码会变灰块）
+   ════════════════════════════════════════════════════════════════════════ */
+@page{size:13.333in 7.5in;margin:0}
+@media print{
+  html,body{background:#fff;overflow:visible}
+  #stage{position:static;left:auto;top:auto;width:1280px;height:auto;transform:none!important}
+  .slide{position:relative;inset:auto;display:flex!important;
+    page-break-after:always;break-after:page;break-inside:avoid}
+  .slide:last-child{page-break-after:auto;break-after:auto}
+  #notes,#help,.chrome{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="chrome"></div>
+<div id="stage">
+
+<!-- ═══════════════ 原型 · 封面 ═══════════════ -->
+<section class="slide cover" data-notes="备注写在这里，翻到这页时会自动显示在底部。">
+  <div class="ctop"></div>
+  <h1>Deck title<br>goes here</h1>
+  <p class="sub">副标题一行 —— 说明这份 deck 要回答什么问题</p>
+  <div class="ctag">署名</div>
+</section>
+
+<!-- ═══════════════ 原型 · 标准页 ＋ 编号条目表 ═══════════════ -->
+<section class="slide" data-notes="条目表：u=25px 时正文区放得下 4 行（含英文小注）。">
+  <div class="head"><span class="kicker">01 · 小节名</span><span class="hline"></span></div>
+  <h1>English headline</h1>
+  <p class="lead">导语一句话。字号 30px，颜色 --ink2。</p>
+  <div class="body">
+    <div class="rows">
+      <div class="row"><span class="n">01</span><span class="k">关键词<small>label</small></span><span class="v">右列一句话说明。小注可以不加。</span></div>
+      <div class="row"><span class="n">02</span><span class="k">关键词<small>label</small></span><span class="v">示例只放 3 行 —— 4 行是 u=25 的上限，没有余量给 u 往上调。</span></div>
+      <div class="row hi"><span class="n">03</span><span class="k">强调行<small>highlight</small></span><span class="v">只靠底色强调，文字保持 --ink</span></div>
+    </div>
+  </div>
+  <div class="quote">落点句：这页唯一的结论。</div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<!-- ═══════════════ 原型 · 标准页 ＋ 三条论点 ═══════════════ -->
+<section class="slide" data-notes="最常用的原型。四条是上限，超过就拆页。">
+  <div class="head"><span class="kicker">02 · 小节名</span><span class="hline"></span></div>
+  <h1>Archetype: arguments</h1>
+  <p class="lead">纯文字的正文，四条以内。超了拆页，不要缩字号。</p>
+  <div class="body">
+    <div class="args">
+      <div class="arg"><span class="an">01</span><span class="at">一条一句话，宁短勿长。</span></div>
+      <div class="arg"><span class="an">02</span><span class="at">要强调的词用<b>加粗</b>，不要整句标红。</span></div>
+      <div class="arg"><span class="an">03</span><span class="at">有代价、有前提的，单独写一行小字。</span></div>
+    </div>
+    <div class="caveat">这一行是「代价说明」的位置：21px，--muted。</div>
+  </div>
+  <div class="quote">三条讲不清的事，一页也讲不清。</div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<!-- ═══════════════ 原型 · 标准页 ＋ 两栏对照 ═══════════════ -->
+<section class="slide" data-notes="两栏对照。加了 .acc 的一栏是强调栏。">
+  <div class="head"><span class="kicker">03 · 小节名</span><span class="hline"></span></div>
+  <h1>Archetype: two columns</h1>
+  <p class="lead">用于正反对比。加 <b>.acc</b> 的一栏标签变红、内容加粗。</p>
+  <div class="body">
+    <div class="pair">
+      <div class="col">
+        <div class="lab">左侧标签</div>
+        <div class="val">左侧内容。<br>可以换行。</div>
+      </div>
+      <div class="col acc">
+        <div class="lab">右侧标签</div>
+        <div class="val">右侧内容，强调栏。<br>用加粗和红色标签区分。</div>
+      </div>
+    </div>
+  </div>
+  <div class="quote">对照的两栏必须真的是对立面，否则用条目表。</div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<!-- ═══════════════ 原型 · 标准页 ＋ 循环图 ═══════════════ -->
+<section class="slide" data-notes="只在需要表达「会回到起点」时用。">
+  <div class="head"><span class="kicker">04 · 小节名</span><span class="hline"></span></div>
+  <h1>Archetype: the loop</h1>
+  <p class="lead">只在需要表达「会回到起点」时用。单向前进的流程用条目表就够了。</p>
+  <div class="body">
+    <div class="loop">
+      <div class="lrow">
+        <div class="lnode"><span class="ln">阶段一</span><span class="ls">一句说明</span></div>
+        <div class="larr">▶</div>
+        <div class="lnode"><span class="ln">阶段二</span><span class="ls">一句说明</span></div>
+        <div class="larr">▶</div>
+        <div class="lnode"><span class="ln">阶段三</span><span class="ls">一句说明</span></div>
+      </div>
+      <div class="lback"><span>带着结果回到起点</span></div>
+    </div>
+    <div class="lnote">回流线用强调色，让「回去」这个动作一眼可见。</div>
+  </div>
+  <div class="quote">三段加一条回流线，就是全部的语法。</div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<!-- ═══════════════ 原型 · 深色证据页 ═══════════════ -->
+<section class="slide dark" data-notes="深色页只有一个用途：装深色截图。加一个 class 即可，结构不动。">
+  <div class="head"><span class="kicker">05 · 小节名</span><span class="hline"></span></div>
+  <h1>Archetype: dark evidence</h1>
+  <p class="lead">深色页只有一个用途：装深色截图。终端截图放白底上像贴了块黑胶布。</p>
+  <div class="body" style="display:flex">
+    <div class="shot">截图放这里 · 转 WebP 后 base64 内联，保持单文件</div>
+  </div>
+  <div class="quote">换深色只改令牌，一个字的页面结构都不用动。</div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<!-- ═══════════════ 原型 · 收尾 ═══════════════ -->
+<section class="slide end" data-notes="收尾：三句话，把整份 deck 收拢。">
+  <div class="head"><span class="kicker">小结</span><span class="hline"></span></div>
+  <h1>Closing headline</h1>
+  <div class="body">
+    <div class="args">
+      <div class="arg"><span class="an">01</span><span class="at">第一句结论。</span></div>
+      <div class="arg"><span class="an">02</span><span class="at">第二句结论。</span></div>
+      <div class="arg"><span class="an">03</span><span class="at">第三句结论。</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>署名</span><span class="ftitle">Deck title goes here</span><span class="pno"></span></div>
+</section>
+
+<section class="slide">
+  <div class="head"><span class="kicker">TEST</span><span class="hline"></span></div>
+  <h1>Single stretched child</h1>
+  <div class="body" style="display:flex">
+    <div><p style="font-size:25px;line-height:1.6">单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。单个子项文字溢出测试。</p></div>
+  </div>
+  <div class="quote">落点句。</div>
+</section>
+
+</div><!-- /#stage -->
+
+<div id="notes"></div>
+<div id="help"><div class="box">
+  <div><kbd>→</kbd><kbd>空格</kbd><kbd>Enter</kbd><kbd>点击</kbd> 下一页</div>
+  <div><kbd>←</kbd> 上一页 &nbsp;·&nbsp; <kbd>Home</kbd> / <kbd>End</kbd> 首尾</div>
+  <div><kbd>f</kbd> 全屏 &nbsp;·&nbsp; <kbd>s</kbd> 备注 &nbsp;·&nbsp; <kbd>p</kbd> 打印/导出 PDF</div>
+  <div><kbd>?</kbd> 显示这份帮助 &nbsp;·&nbsp; <kbd>Esc</kbd> 关闭</div>
+</div></div>
+
+<script>
+(function(){
+  var S = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var notes = document.getElementById('notes');
+  var help  = document.getElementById('help');
+  var bar   = document.querySelector('.chrome');
+  var i = 0;
+
+  function fit(){
+    var st = document.getElementById('stage');
+    var s  = Math.min(window.innerWidth/1280, window.innerHeight/720);
+    st.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  function apply(){
+    S.forEach(function(el,n){ el.style.display = (n===i) ? 'flex' : 'none'; });
+    bar.style.width = ((i+1)/S.length*100) + '%';
+    notes.innerHTML = '<b>' + (i+1) + ' / ' + S.length + '</b>' + (S[i].dataset.notes || '');
+    if (location.hash !== '#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+  }
+  function goto(n){ i = Math.max(0, Math.min(S.length-1, n)); apply(); }
+  function next(){ if(i < S.length-1) goto(i+1); }
+  function prev(){ if(i > 0) goto(i-1); }
+
+  document.addEventListener('keydown', function(e){
+    var k = e.key;
+    if (k==='?'||(k==='/'&&e.shiftKey)){ help.classList.toggle('on'); e.preventDefault(); return; }
+    if (k==='Escape'){ help.classList.remove('on'); return; }
+    if (help.classList.contains('on')) return;
+    if (k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'||k==='ArrowDown'){ next(); e.preventDefault(); }
+    else if (k==='ArrowLeft'||k==='PageUp'||k==='ArrowUp'){ prev(); e.preventDefault(); }
+    else if (k==='Home'){ goto(0); e.preventDefault(); }
+    else if (k==='End'){ goto(S.length-1); e.preventDefault(); }
+    else if (k==='f'||k==='F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (k==='s'||k==='S'){ notes.classList.toggle('on'); }
+    else if (k==='p'||k==='P'){ window.print(); }
+  });
+  document.addEventListener('click', function(e){
+    if (help.classList.contains('on')) { help.classList.remove('on'); return; }
+    if (e.target.closest('#notes')) return;
+    next();
+  });
+
+  window.addEventListener('resize', fit);
+  var h = parseInt((location.hash||'').replace('#',''),10);
+  if (h >= 1 && h <= S.length) i = h-1;
+
+  /* 页码由 JS 生成 —— 手写在 HTML 里的话，插一页就得改所有页，
+     而且 check.py 查不出来。 */
+  S.forEach(function(el, n){
+    var p = el.querySelector('.pno');
+    if (p) p.textContent = String(n+1).padStart(2,'0') + ' / '
+                         + String(S.length).padStart(2,'0');
+  });
+
+  fit(); apply();
+})();
+</script>
+</body>
+</html>

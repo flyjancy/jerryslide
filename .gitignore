@@ -1,0 +1,7 @@
+# 构建产物 —— 每份 deck 自己的 PDF 和抽出来的页面文件
+*.pdf
+*.pages.html
+
+# 中间产物
+__pycache__/
+.DS_Store
