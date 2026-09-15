@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """pack.py —— 把 `_theme/` 组装成 pi skill。
 
-    python3 pack.py [--out ~/.pi/agent/skills/slides] [--dry-run]
+    python3 pack.py [--out ~/.pi/agent/skills/jerryslide] [--dry-run]
 
 为什么要这个脚本而不是手工拷
 ────────────────────────────
