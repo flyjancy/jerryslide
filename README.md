@@ -90,11 +90,17 @@ AI 的天性是把字号调小来"帮你保住内容" —— **那等于拆掉�
 
 ## 安装
 
-这是给 [pi](https://github.com/badlogic/pi-mono) 用的 skill：
+这是给 [pi](https://github.com/badlogic/pi-mono) 用的 skill。**`git clone` 就是安装**：
 
 ```bash
-git clone <this-repo> ~/.pi/agent/skills/jerryslide
+git clone https://github.com/flyjancy/jerryslide.git ~/.pi/agent/skills/jerryslide
+
+# 顺手打开「提交前自包含校验」（每台机器一次）
+git -C ~/.pi/agent/skills/jerryslide config core.hooksPath docs/hooks
 ```
+
+**没有打包、没有安装脚本、没有第二份** —— clone 下来的目录本身就是 skill 目录。
+更新就是 `git pull`。
 
 然后在会话里用 **`/skill:jerryslide`** 唤起。
 
@@ -193,12 +199,16 @@ docs/
   SKILL-NOTES.md            把它做成 skill 的判断
   PACKAGING.md              打包计划与执行记录
   preview.png
-  pack.py                   验证并安装这个 skill —— 只读本目录的上一级（skill 根），
-                            并机械检查它没有引用 skill 之外的文件
+  selfcheck.py              自包含校验：SKILL.md / references / scripts 里
+                            不许引用 skill 之外的文件
+  hooks/pre-commit          提交前自动跑上面那条
 ```
 
-**这个仓库本身就是那个 skill** —— 上面这一层就是安装单元，不经过任何转换步骤。
-`docs/` 和 `README.md` 是给开发者的，不随 skill 安装。
+**这个仓库本身就是那个 skill。** clone 下来就是装好了 ——
+没有打包、没有安装脚本、没有第二份。
+
+π 只读 `SKILL.md`，再按相对路径用 `references/` `scripts/` `assets/`；
+`docs/` 和 `README.md` 搭便车留在目录里，但不会被加载。
 
 ---
 

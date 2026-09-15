@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#
+# pre-commit —— 提交前自动跑 skill 的自包含校验。
+#
+# 启用（每台机器一次）：    git config core.hooksPath docs/hooks
+# 临时绕过：               git commit --no-verify
+#
+# 为什么要有它
+# ────────────
+# 「skill 引用了外面的文件」是**静默失败** —— 在作者自己的机器上永远是对的，
+# 只有换台机器、把源目录删掉、或者别人 clone 走之后才断。
+# 写进文档让人"记得跑"是靠不住的；放在门口拦一下才靠得住。
+#
+# 为什么钩子放在 docs/hooks/ 而不是 .git/hooks/
+# ────────────────────────────────────────────
+# `.git/` 不随仓库走 —— 它不会被 clone、不会被 push。
+# 所以钩子本体必须住在仓库里（能被 clone 走），
+# 只用一条本地配置（core.hooksPath）告诉 git 去哪儿找。
+# 那条配置默认不生效，所以上面的"启用"命令每台机器要跑一次。
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$repo_root" ] || exit 0
+cd "$repo_root"
+
+if [ ! -f docs/selfcheck.py ]; then
+  echo "  · 跳过自包含校验（找不到 docs/selfcheck.py）"
+  exit 0
+fi
+
+echo "  提交前自检"
+if ! python3 docs/selfcheck.py; then
+  echo
+  echo "  ✗ 提交被拦下 —— 修好上面的问题再提交。"
+  echo "    确实要绕过： git commit --no-verify"
+  exit 1
+fi
