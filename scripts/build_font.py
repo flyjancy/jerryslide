@@ -8,9 +8,9 @@
                      系统字体（PingFang 等可变字体）只能导出 Type 3
 
 用法：
-    python3 build_font.py deck.html                 # 原地内联
-    python3 build_font.py deck.html -o out.html     # 另存
-    python3 build_font.py deck.html --report        # 只报字号大小
+    ./scripts/build_font.py deck.html                 # 原地内联
+    ./scripts/build_font.py deck.html -o out.html     # 另存
+    ./scripts/build_font.py deck.html --report        # 只报字号大小
 
 依赖：
     pip install fonttools brotli

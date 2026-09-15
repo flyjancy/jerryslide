@@ -32,12 +32,12 @@
 
 用法
 ────
-    python3 parts.py                 # 体检：只列有问题的
-    python3 parts.py --list          # 完整清单
-    python3 parts.py --emit          # 重新生成 RULES.md 里的零件表
-    python3 parts.py --check         # 有漂移就退出码 1（给 build.sh 用）
+    ./scripts/parts.py                 # 体检：只列有问题的
+    ./scripts/parts.py --list          # 完整清单
+    ./scripts/parts.py --emit          # 重新生成 references/RULES.md 里的零件表
+    ./scripts/parts.py --check         # 有漂移就退出码 1（给 build.sh 用）
 
-RULES.md 里被生成的段落夹在这两个标记之间 —— **不要手改那一段**：
+references/RULES.md 里被生成的段落夹在这两个标记之间 —— **不要手改那一段**：
 
     <!-- BEGIN PARTS -->
     <!-- END PARTS -->
@@ -55,18 +55,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 def find_asset(name: str) -> Path:
-    """找模板 / 文档，兼容两种布局：
+    """找 skill 里的模板 / 文档。
 
-        _theme/                    ← 开发工作区（平铺）
-            template.html
-            parts.py
-        slides/                    ← 打包后的 skill
+        $SKILL/                    ← 本 skill 目录（SKILL.md 所在处）
             assets/template.html
             references/RULES.md
             scripts/parts.py       ← __file__ 在这里
 
-    所以依次找：同目录 → 上一级的 assets/ → 上一级的 references/ → 同级的 assets/。
-    **同一个脚本在两种布局下都能跑** —— 这样 _theme 和 skill 不会漂移。
+    依次找：同目录 → 上一级的 assets/ → 上一级的 references/ → 同级的 assets/。
+    这样不管从哪个目录调用脚本都能定位到 skill 内的文件。
     """
     for c in (HERE / name,
               HERE.parent / "assets" / name,
@@ -78,7 +75,7 @@ def find_asset(name: str) -> Path:
     raise SystemExit(
         f"✗ 找不到 {name}。\n"
         f"  找过：{HERE}/ · {HERE.parent}/assets/ · {HERE.parent}/references/\n"
-        f"  这份脚本要在 _theme/ 里跑，或者在打包后的 slides/scripts/ 里跑。")
+        f"  这个文件应该在被安装的 skill 目录里（scripts/ 的上一级）。")
 
 RULES = None   # 由 find_asset 定位
 NEWDECK = HERE / "newdeck.py"
@@ -409,13 +406,13 @@ def emit_table(s: dict) -> str:
     mod = [r for r in parts if r["kind"] == "修饰"]
     kid = [r for r in parts if r["kind"] == "子元素"]
     out = [BEGIN,
-           "<!-- 由 `python3 parts.py --emit` 生成 · 不要手改这一段 -->",
+           "<!-- 由 `./scripts/parts.py --emit` 生成 · 不要手改这一段 -->",
            "",
            f"**{len(top)} 个顶级零件 · {len(mod)} 个页级修饰 · {len(var)} 个变体 · {len(kid)} 个子元素**"
            f"（另有 {len(s['rows']) - len(parts)} 个是放映器界面，作者不写）",
            "",
            "「定义」那一列的行号是 **`newdeck.py` 剥过调参面板的版本**里的行号 —— ",
-           "也就是你起手拿到的那份文件。`template.html` 没剥面板，行号不一样。",
+           "也就是你起手拿到的那份文件。`assets/template.html` 没剥面板，行号不一样。",
            "",
            "「用途」取自 CSS 里那条规则的注释（前导或行尾）—— 所以它跟定义在一起，",
            "**改 CSS 的时候顺手改注释，表就不会漂移**。",
@@ -450,7 +447,7 @@ def write_rules(block: str) -> bool:
     t = RULES.read_text(encoding="utf-8")
     pat = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
     if not pat.search(t):
-        raise Fail(f"RULES.md 里没有 {BEGIN} … {END} —— 先放一个占位。")
+        raise Fail(f"references/RULES.md 里没有 {BEGIN} … {END} —— 先放一个占位。")
     new = pat.sub(lambda m: block, t, count=1)
     if new == t:
         return False
@@ -465,7 +462,7 @@ def write_rules(block: str) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(prog="parts.py", description="零件清单：定义 × 示范 × 文档")
     g = ap.add_mutually_exclusive_group()
-    g.add_argument("--emit", action="store_true", help="重新生成 RULES.md 的零件表")
+    g.add_argument("--emit", action="store_true", help="重新生成 references/RULES.md 的零件表")
     g.add_argument("--check", action="store_true", help="有漂移就退出码 1")
     g.add_argument("--list", action="store_true", help="完整清单")
     g.add_argument("--summary", action="store_true", help="一行摘要")
@@ -504,7 +501,7 @@ def main() -> int:
 
     if args.emit:
         ch = write_rules(emit_table(s))
-        print(f"  {'✓ 已更新' if ch else '· 已是最新'} RULES.md 的零件表 "
+        print(f"  {'✓ 已更新' if ch else '· 已是最新'} references/RULES.md 的零件表 "
               f"（{len(parts)} 个零件）")
         if fail:
             print(f"\n  ✗ {len(fail)} 条必须修（表已生成，但零件还是看不见）：")

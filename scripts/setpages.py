@@ -16,18 +16,18 @@ agent 会自己发明一套「stage.html ＋ 一段 python 切片脚本」的流
 
 用法
 ────
-    python3 setpages.py deck.html --extract [pages.html]   抽出页面（默认 <deck>.pages.html）
-    python3 setpages.py deck.html [pages.html]             把页面贴回 deck
-    python3 setpages.py deck.html --list                   只列出页面清单，不写
-    python3 setpages.py deck.html --check                  只体检，不写
+    ./scripts/setpages.py deck.html --extract [pages.html]   抽出页面（默认 <deck>.pages.html）
+    ./scripts/setpages.py deck.html [pages.html]             把页面贴回 deck
+    ./scripts/setpages.py deck.html --list                   只列出页面清单，不写
+    ./scripts/setpages.py deck.html --check                  只体检，不写
 
 典型流程
 ────────
-    python3 newdeck.py out.html          # 从模板起一副骨架（带 11 页示范）
-    python3 setpages.py out.html --extract
-    $EDITOR out.pages.html               # 改页面
-    python3 setpages.py out.html         # 贴回去
-    ./build.sh out.html                  # 字体 → PDF → 验收
+    ./scripts/newdeck.py out.html          # 从模板起一副骨架（带 12 页示范）
+    ./scripts/setpages.py out.html --extract
+    $EDITOR out.pages.html                 # 改页面
+    ./scripts/setpages.py out.html         # 贴回去
+    ./scripts/build.sh out.html            # 字体 → PDF → 验收
 
 退出码：0 = 成功 · 1 = 检查没过（**没有写任何文件**）
 """
@@ -213,7 +213,7 @@ def verify_splice(old: str, new: str, n_expect: int) -> None:
 # ══════════════════════════════════════════════════════════════════════
 
 def _rel(p: Path) -> str:
-    """相对当前目录的路径 —— 打包后脚本在 scripts/ 里，写裸文件名会误导。"""
+    """相对当前目录的路径 —— 安装后脚本在 scripts/ 里，写裸文件名会误导。"""
     try:
         return os.path.relpath(p, os.getcwd())
     except ValueError:
@@ -314,7 +314,7 @@ def main() -> int:
 
         # ── 贴回去 ───────────────────────────────────────────────
         if not pages_path.exists():
-            print(f"✗ 没有 {pages_path}。先跑： python3 setpages.py {deck} --extract",
+            print(f"✗ 没有 {pages_path}。先跑： ./scripts/setpages.py {deck} --extract",
                   file=sys.stderr)
             return 1
         pages = pages_path.read_text(encoding="utf-8")
@@ -341,7 +341,7 @@ def main() -> int:
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  自检（python3 setpages.py --self-test）
+#  自检（./scripts/setpages.py --self-test）
 # ══════════════════════════════════════════════════════════════════════
 
 _SHELL = """<!doctype html>

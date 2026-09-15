@@ -193,9 +193,12 @@ docs/
   SKILL-NOTES.md            把它做成 skill 的判断
   PACKAGING.md              打包计划与执行记录
   preview.png
-  pack.py                   从 _theme/ 开发工作区重新组装这个 repo —— 它读的是
-                            _theme/ 里的源文件，不能在这里跑
+  pack.py                   验证并安装这个 skill —— 只读本目录的上一级（skill 根），
+                            并机械检查它没有引用 skill 之外的文件
 ```
+
+**这个仓库本身就是那个 skill** —— 上面这一层就是安装单元，不经过任何转换步骤。
+`docs/` 和 `README.md` 是给开发者的，不随 skill 安装。
 
 ---
 

@@ -32,12 +32,11 @@
 
 ### 文件
 
-| 文件 | 字节 | 状态 |
-|---|---|---|
-| `_theme/RULES.md` | 12,706 | ✅ 规范与推导，§0–§10 |
-| `_theme/template.html` | 29,501 | ✅ 可用。CSS 65% · JS 8% · 7 页示例 21% |
-| `_theme/check.py` | 7,931 | ✅ 可用，自检全绿 |
-| `_theme-旧-从现有deck提取的/` | 44K | 🗄️ 旧方案（归纳法），留作对照，可删 |
+| 文件 | 状态 |
+|---|---|
+| `references/RULES.md` | ✅ 规范与推导，§0–§10 |
+| `assets/template.html` | ✅ 可用。CSS 65% · JS 8% · 页示例约 21% |
+| `scripts/check.py` | ✅ 可用，自检全绿 |
 
 ### 已经跑通的
 
@@ -174,7 +173,7 @@ u = 7.447 × D / W      D=最远座位(m)，W=屏宽(m)
 
 | 方案 | 为什么否决 |
 |---|---|
-| **从现有 deck 提取交集** | 固化偶然，且发现不了系统性错误（`_theme-旧-.../` 就是这条路） |
+| **从现有 deck 提取交集** | 固化偶然，且发现不了系统性错误（最早那版归纳法方案就是这条路，已废弃） |
 | **拆成 `base.html` + `parts.html`** | ① 与 §3.9（单文件）+ §4（否决构建脚本）矛盾——合起来已推出"只能一个源文件"；② 拆的轴不对：病因是"CSS 混三层关注点"，却按"系统 vs 示例"切；③ 校验只能覆盖 `:root`，骨架和原型 CSS 照样各存两份；④ 净收益为负——为省一次"删 6 段"的动作，换来长期维护两份 19KB CSS |
 | **`build.py` 构建脚本** | 手上只有两份 deck 就上构建系统，是过早抽象 |
 | **Ghostscript 压缩 PDF** | 破坏 ToUnicode 映射表，文字变乱码，搜索/复制/读屏全废。体积不是真问题 |
@@ -197,7 +196,7 @@ u = 7.447 × D / W      D=最远座位(m)，W=屏宽(m)
 
 ### 5-1 ✅ 拿 `为什么需要 Reviewer` 提炼原型（已完成）
 
-**产出：`为什么需要 Reviewer/index.html`**（已替换发布版，旧版归档在 `_旧版-Keynote衍生/`）—— 8 页，机械全绿。
+**产出：`为什么需要 Reviewer/index.html`**（已替换发布版；它之前的 Keynote 衍生版已删除）—— 8 页，机械全绿。
 
 提炼进零件库的 7 个零件（老 deck 有、模板没有的）：
 
@@ -240,7 +239,7 @@ u = 7.447 × D / W      D=最远座位(m)，W=屏宽(m)
 #### 还没做的
 
 - ~~`index-v2.html` 替换已发布的 `index.html`~~ ✅ 已换（2025-09 第四轮）
-  · 旧版归档到 `为什么需要 Reviewer/_旧版-Keynote衍生/`
+  · 旧版（Keynote 衍生版）已删除
   · 新 PDF 1454 KB（旧 2581 KB，**小 44%**）· 0 Type 3 · 0 软掩码
 - `demo.html` 还没同步新的 7 个零件
 - ~~工作流收成一条命令~~ ✅ `build.sh` 已做
@@ -269,7 +268,7 @@ u = 7.447 × D / W      D=最远座位(m)，W=屏宽(m)
 
 ### 5-2b ✅ `什么是 Agent` 重做 = 模板的**第二次验收**（已完成）
 
-**产出：`什么是 Agent/index.html`**（10 页 · 0 图片 · 0 深色页）· 旧版在 `_旧版-旧模板/`
+**产出：`什么是 Agent/index.html`**（10 页 · 0 图片 · 0 深色页）· 它之前的旧模板版已删除
 
 #### 验收发现了什么（这才是这一步的价值）
 
@@ -308,7 +307,7 @@ Agent deck 原来写「用眼睛看改成了什么」（9 字）就踩了。
 
 ### 5-3 ⬜ 长期：让 styleguide 用令牌渲染自己
 
-`_theme-旧/styleguide.html` 把字号写成了 `style="font-size:54px"` + 手写的 `54px · 英文衬线` + 手写的 `--fs-h1`——**同一件事写了三遍**。加一行 JS 用 `getComputedStyle` 把实际像素填进去，改 `--u` 目录自动跟着变。
+最早那版方案的 `styleguide.html` 把字号写成了 `style="font-size:54px"` + 手写的 `54px · 英文衬线` + 手写的 `--fs-h1`——**同一件事写了三遍**。加一行 JS 用 `getComputedStyle` 把实际像素填进去，改 `--u` 目录自动跟着变。
 
 ### 5-4 ⬜ 旧方案手里还有两样东西没吸收
 
@@ -359,7 +358,7 @@ Agent deck 原来写「用眼睛看改成了什么」（9 字）就踩了。
 
 ```bash
 # 自检
-python3 _theme/check.py deck.html --pdf out.pdf
+./scripts/check.py deck.html --pdf out.pdf
 
 # 导出 PDF（不要用浏览器的"打印 → 存储为 PDF"）
 CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"

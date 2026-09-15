@@ -4,7 +4,7 @@
 > 做错了不会报错、屏幕上看不出来、`check.py` 可能也查不到 —— 代价由观众承担。
 >
 > 这是整套系统里**最值钱的一节**，因为它是经验，不是规则。
-> 规则写在 `RULES.md`，操作写在 `BUILD.md`。
+> 规则写在 `references/RULES.md`，操作写在 `references/BUILD.md`。
 
 ---
 
@@ -83,7 +83,7 @@
 **四条全部塌成同一个中性灰。** 暖色偏、冷色偏、蓝色偏全被 4:2:0 抹掉。
 
 **规则**：面要么**色偏 ≥20**，要么**灰阶差 ≥6**。最浅的活面是 `#f2f2f2`。
-详见 `RULES.md §5 硬约束三`。
+详见 `references/RULES.md §5 硬约束三`。
 
 ---
 
@@ -105,7 +105,7 @@
 
 **为什么看不出来**：症状看起来像「样式没加载」，不像「JS 死了」。
 
-**实例**（本仓库真实踩的）：
+**实例**（真实踩过的）：
 
 删调参面板时用了非贪婪正则 `<div id="pbtn">.*?</div>\s*<div id="panel">.*?</div>`，
 `.*?` 只吃到**第一个** `</div>` —— **外壳删了、内容留在文档里**。后果链：
@@ -151,7 +151,7 @@
 **实测**（Reviewer deck，8 页）：五页有截图，只有两页是深的。
 这不是「两种底色混用」，是**同一种情况用了两种处理**。
 
-**规矩**：**深/浅给整份 deck 一个统一答案，不许逐页切。** 见 `RULES.md §5 硬约束五`。
+**规矩**：**深/浅给整份 deck 一个统一答案，不许逐页切。** 见 `references/RULES.md §5 硬约束五`。
 
 **`check.py` 抓不到这个** —— 它逐页量几何，没有「整本节奏」这个概念。
 只能靠人翻一遍。
@@ -248,14 +248,13 @@ pdffonts out.pdf | grep -c 'Type 3'     # 必须是 0
 **这条最阴**：它不违反任何规则，你只是"改了个错别字"。
 改动本身是对的，坏的是**没有人提醒你要重建字体**。
 
-**实例**：本仓库在展示页文案里把「加导语就只剩 2 行」改成「加导语就只**剩** 2 行」、
+**实例**：在展示页文案里把「加导语就只剩 2 行」改成「加导语就只**剩** 2 行」、
 「**无**导语可放 3 行」——`剩` `无` 两个字不在子集里，静默掉回 PingFang。
 
 **怎么查**：
 
 ```bash
-$PY build_font.py deck.html        # 改完文字无脑重跑（幂等）
-python3 check.py deck.html         # 字形覆盖检查会报告缺字
+./scripts/build.sh deck.html       # 改完文字无脑重跑（幂等）：字体 → PDF → 验收一条龙
 ```
 
 `check.py` 的 `font_coverage_check` 会解码内联的 base64、提取 deck 里所有可见字符、
@@ -270,9 +269,9 @@ python3 check.py deck.html         # 字形覆盖检查会报告缺字
 **为什么看不出来**：你可能永远不翻到那一页。而且导出 PDF 时 Chrome 反正会裁切，
 **所以从 PDF 上也看不出问题**——只有真去放映那页才发现。
 
-**现状**：`template.html` 里已经有 `overflow:hidden` ✓。
-但 **`什么是 Agent/index.html` 第 6 页没有**，余量只有 **+8.4px** ——
-**这个坑在已发布的 deck 里还活着。**
+**现状**：`assets/template.html` 里已经有 `overflow:hidden` ✓。
+但早期一份已发布的真实 deck 第 6 页没有，余量只有 **+8.4px** ——
+**这个坑在真实 deck 里是活着的。**
 
 **依赖**（会一起动的三处）：
 
@@ -339,9 +338,9 @@ h = h[:a] + "\n" + stage.strip() + "\n" + h[b:]
 **怎么查**：现在有 `setpages.py`：
 
 ```bash
-python3 setpages.py deck.html --extract   # 页面抽到几 KB 的文件里改
-python3 setpages.py deck.html             # 贴回去
-python3 setpages.py deck.html --check     # 只体检
+./scripts/setpages.py deck.html --extract   # 页面抽到几 KB 的文件里改
+./scripts/setpages.py deck.html             # 贴回去
+./scripts/setpages.py deck.html --check     # 只体检
 ```
 
 它保证 **边界以外逐字节不动**（抽出来再贴回去 `md5` 不变），写盘前自检五项：
@@ -368,17 +367,17 @@ python3 setpages.py deck.html --check     # 只体检
 
 **同一个问题四种解法、两种结果 —— 这说明工具链缺一个入口，不是 agent 粗心。**
 
-**⚠️ 更糟的是：本仓库两份已发布的 deck 也是这个状态。**
+**⚠️ 更糟的是：两份已发布的真实 deck 也是这个状态。**
 写这条检查的时候才发现的 —— `check.py` 一上来就把它们判失败：
 
 ```
 ✗ title 还是模板的（'幻灯片规范 · 零件库'）—— 交付物里不该有开发档案
-    改：python3 setpages.py <deck> --title '这份 deck 的全名'
+    改：./scripts/setpages.py <deck> --title '这份 deck 的全名'
 ```
 
 **怎么查**：`check.py` 现在**判失败**（`template.html` / `demo.html` 例外，那个标题是对的）。
-修：`python3 setpages.py <deck> --title '…'` —— 只换那一个标签，页面区和外壳其余部分逐字节不动。
-起手时也可以直接 `python3 newdeck.py out.html "deck 全名"`。
+修：`./scripts/setpages.py <deck> --title '…'` —— 只换那一个标签，页面区和外壳其余部分逐字节不动。
+起手时也可以直接 `./scripts/newdeck.py out.html "deck 全名"`。
 
 **规矩**：**`<title>` 是「这份 deck 的内容」，不是外壳。**
 `setpages.py --title` 是唯一允许碰外壳内容的地方（因为它是内容），而且只换一个标签。
@@ -509,11 +508,11 @@ PDF 是拿来分发的，不能牺牲可搜索性。**拒绝。**
 
 ### ✗ 从现有 deck 归纳模板
 
-**否决**。理由是个逻辑陷阱：`template.html` 是从 `为什么需要 Reviewer` 提炼的
-（43 类里 41 类来自它），**拿它验收必然全绿**，得不出任何信息。
+**否决**。理由是个逻辑陷阱：`assets/template.html` 的零件有很大一部分正是从
+一份真实 deck 提炼的（43 类里 41 类来自它），**拿同一份 deck 验收必然全绿**，
+得不出任何信息。
 
-所以 `_theme/` 是**从需求推导**的，不是从现有 deck 归纳的。
-旧归纳法版本留在 `_theme-旧-从现有deck提取的/`。
+所以这套模板是**从需求推导**的，不是从现有 deck 归纳的。
 
 ### ✗ 拆 base / parts 两套模板
 

@@ -44,9 +44,9 @@ agent **看不见**这个 skill，只能你打 `/skill:jerryslide` 唤起。
 
 见 §3。核心是**把环境问题从"跑到第三步才崩"变成"开工前就知道"**。
 
-### ✅ 决定 ④ skill 名字：**`slides`**
+### ✅ 决定 ④ skill 名字：**`jerryslide`**
 
-最短。前提写进 `description`。
+（最初定为 `slides`，后来改名。）最短，前提写进 `description`。
 
 ---
 
@@ -55,7 +55,7 @@ agent **看不见**这个 skill，只能你打 `/skill:jerryslide` 唤起。
 pi 的约定：目录 + `SKILL.md`，其余自由。惯例用 `scripts/` `references/` `assets/`。
 
 ```
-slides/
+jerryslide/
 ├── SKILL.md                    ← 新建 · 常驻 context · 目标 ≤ 200 行
 ├── references/                 ← 按需加载
 │   ├── RULES.md                ← 50 KB，唯一真相源
@@ -147,7 +147,7 @@ def get_noto_vf():
   改成全部走 venv（`check.py` 的字体检查依赖 `fontTools`，系统 Python 未必有）
 - [x] **1.4** **venv 从 `/tmp/slidenv` 挪到 `~/.cache/slide-venv`**
   —— `/tmp` 重启就没，而重建要 pip 联网。和 `slide-fonts` 放一起
-- [x] **1.5** **验收**：把 `_theme/` 拷到 `/tmp/portable/`，剥掉字体，跑通 `./build.sh`
+- [x] **1.5** **验收**：把 skill 目录拷到 `/tmp/portable/`，剥掉字体，跑通 `./scripts/build.sh`
 
 ### 第 2 组 · 生成无字体版
 
@@ -187,7 +187,7 @@ def get_noto_vf():
 
 ```markdown
 ---
-name: slides
+name: jerryslide
 description: >
   做在线会议共享屏幕用的 HTML slide（单文件、离线、可导 PDF）。
   中英混排、学术简约风。含模板、构建脚本、机械验收。

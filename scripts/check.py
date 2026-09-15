@@ -3,9 +3,9 @@
 check.py —— slide 发布前自检
 
 用法：
-    python3 check.py template.html
-    python3 check.py deck.html --pdf out.pdf
-    python3 check.py --self-test            # 跑 tests/ 下的反向用例
+    ./scripts/check.py assets/template.html
+    ./scripts/check.py deck.html --pdf out.pdf
+    ./scripts/check.py --self-test            # 跑 assets/tests/ 下的反向用例
 
 退出码：0 = 全部通过，1 = 有问题
 
@@ -227,7 +227,7 @@ def static_checks(src, path=None):
         n += 1
     elif t == TPL_TITLE and not is_tpl:
         print(f"  ✗ title 还是模板的（{t!r}）—— 交付物里不该有开发档案")
-        print("      改：python3 setpages.py <deck> --title '这份 deck 的全名'")
+        print("      改：./scripts/setpages.py <deck> --title '这份 deck 的全名'")
         n += 1
     else:
         print(f"  ✓ title：{t!r}")
@@ -413,15 +413,15 @@ def pdf_check(path):
 
 
 def self_test():
-    """跑 tests/ 下的反向用例。§7-2 要求：对故意改坏的文件必须报错。"""
+    """跑 assets/tests/ 下的反向用例。§7-2 要求：对故意改坏的文件必须报错。"""
     here = os.path.dirname(os.path.abspath(__file__))
-    # tests/ 在 _theme 里是同级，打包后住 assets/tests —— 两个都认
+    # 反向用例住在 assets/tests/ —— 从脚本所在目录依次找几个可能的位置
     tdir = next((d for d in (os.path.join(here, "tests"),
                              os.path.join(here, "..", "assets", "tests"),
                              os.path.join(here, "assets", "tests"))
                  if os.path.isdir(d)), None)
     if not tdir:
-        print("✗ 找不到 tests/ 目录（--self-test 要用）")
+        print("✗ 找不到 assets/tests/ 目录（--self-test 要用）")
         return 1
     if not os.path.isdir(tdir):
         print(f"✗ 找不到 {tdir}")

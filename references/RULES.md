@@ -6,25 +6,25 @@
 
 | 文件 | 作用 | 什么时候看 |
 |---|---|---|
-| `RULES.md` | 本文件 —— **规范和推导（唯一真相源）** | 决定某件事该怎么做 |
-| `BUILD.md` | **怎么跑**：环境、五步、四个坑 | 动手做一份 deck |
-| `FAILURES.md` | **错了但不会报警的清单** | 出事了 / 发布前 |
-| `SKILL-NOTES.md` | 关于做成 skill 的判断与设计 | 想这件事值不值得沉淀 |
-| `PLAN.md` | 决策记录：为什么这么定、否决了什么 | 想改规范之前 |
-| `template.html` | 零件库（**12 页**展示所有原型） | 起手复制 |
-| `demo.html` | 用模板做的 demo | 看效果 |
-| `check.py` | 发布前自检（静态 + 字形覆盖 + 几何 + PDF） | **每次交付前必跑** |
-| `build_font.py` | 字体子集化 + 内联（幂等） | **改完文字必跑** |
-| `build.sh` | 上面两步 + 导出 PDF + 验收，一条命令 | **日常就用这个** |
-| `newdeck.py` | 从模板起一份生产 deck | 开新 deck |
-| `setpages.py` | 页面抽出／贴回（**边界以外逐字节不动**） | **改页面就用这个** |
+| `references/RULES.md` | 本文件 —— **规范和推导（唯一真相源）** | 决定某件事该怎么做 |
+| `references/BUILD.md` | **怎么跑**：环境、五步、四个坑 | 动手做一份 deck |
+| `references/FAILURES.md` | **错了但不会报警的清单** | 出事了 / 发布前 |
+| `assets/template.html` | 零件库（**12 页**展示所有原型） | 起手复制 |
+| `assets/demo.html` | 用模板做的 demo | 看效果 |
+| `scripts/check.py` | 发布前自检（静态 + 字形覆盖 + 几何 + PDF） | **每次交付前必跑** |
+| `scripts/build_font.py` | 字体子集化 + 内联（幂等） | **改完文字必跑** |
+| `scripts/build.sh` | 上面两步 + 导出 PDF + 验收，一条命令 | **日常就用这个** |
+| `scripts/newdeck.py` | 从模板起一份生产 deck | 开新 deck |
+| `scripts/setpages.py` | 页面抽出／贴回（**边界以外逐字节不动**） | **改页面就用这个** |
 | — | `<title>` = `setpages.py --title`（唯一允许碰外壳内容的地方） | 起手 / 改名 |
-| `parts.py` | 零件清单：定义 × 示范 × 文档，从 CSS 生成 | **改 CSS 之后必跑** |
-| `tests/` | 反向用例 | 改了 `check.py` 之后 |
+| `scripts/parts.py` | 零件清单：定义 × 示范 × 文档，从 CSS 生成 | **改 CSS 之后必跑** |
+| `assets/tests/` | 反向用例 | 改了 `check.py` 之后 |
+
+路径都相对于**本 skill 目录**（`SKILL.md` 所在目录，下文记作 `$SKILL`）。
 
 ```bash
-python3 check.py template.html          # 静态检查 + 逐页容量
-python3 check.py deck.html --pdf out.pdf
+"$SKILL/scripts/check.py" assets/template.html   # 静态检查 + 逐页容量
+"$SKILL/scripts/check.py" deck.html --pdf out.pdf
 ```
 
 ---
@@ -116,7 +116,7 @@ u = 17.5 × 1280 / Sv = 22400 / Sv
 初版设计时我以为"改 `u` 一个数，整套等比缩放"就够了。**实测证明这是错的**：
 骨架（页眉 / 标题 / 导语 / 落点句 / 页脚）也随 `u` 线性增长，`u` 一大，骨架自己就把整页吃光。
 
-实测（`python3 check.py` 扫各档 `u`）：
+实测（`./scripts/check.py` 扫各档 `u`）：
 
 | `u` | 正文区 | 骨架占用 | 骨架占比 | 条目表(含注) | (无注) | 三条论点 | 判定 |
 |---|---|---|---|---|---|---|---|
@@ -210,9 +210,9 @@ Type 3 数量不为 0 时 `check.py` 现在直接判失败，不再只是打印�
 ### 怎么做
 
 ```bash
-pip install fonttools brotli
-python3 build_font.py deck.html          # 原地内联
-python3 build_font.py deck.html --report # 只看大小
+python3 -m pip install fonttools brotli
+./scripts/build_font.py deck.html          # 原地内联
+./scripts/build_font.py deck.html --report # 只看大小
 ```
 
 `build_font.py` 会：实例化 Noto Sans SC 变量字体到 400/700 → 按 deck 里**真实出现的字符**子集化 → WOFF2 → base64 内联。
@@ -383,7 +383,7 @@ python3 build_font.py deck.html --report # 只看大小
 **页脚 = 文档身份条。** 中间告诉读者「这是哪份」，右边告诉「到哪了」。
 **小节位置由页眉的 `.kicker` 承担** —— 它就在顶上，页脚再写一遍是重复。
 
-#### 讲者**只出现在封面** —— 本仓库固定为 `Fengrui`
+#### 讲者**只出现在封面** —— 本模板固定为 `Fengrui`
 
 | 位置 | 值 | 出现频率 |
 |---|---|---|
@@ -436,7 +436,7 @@ python3 build_font.py deck.html --report # 只看大小
 
 `.body` 是 `flex:1`。**内容超量时它不会把页脚顶下去，而是让内容直接压在落点句上。**
 
-已经踩过两次（见 `../为什么需要 Reviewer/` 那两份 deck 的修复记录）。所以：
+已经踩过两次 —— 都在真实 deck 上。所以：
 
 ```css
 .body{flex:1;min-height:0;overflow:hidden}
@@ -461,7 +461,7 @@ python3 build_font.py deck.html --report # 只看大小
 | **纵向** | `.body` 盒子 | 它下面紧跟着落点句和页脚，越界就是**碰撞** |
 | **横向** | 幻灯片的**物理边缘** | 页边距是空白，色带向外渗是**有意的设计手法** |
 
-依据：`为什么需要 Reviewer` 第 7 页的底色行用 `margin:0 -19px`，让带底色的行与上下行**文字对齐**；色带往 76px 的页边距里渗 19px 还剩 57px。按 `.body` 盒子判会误报成溢出。
+依据：真实 deck 第 7 页的底色行用 `margin:0 -19px`，让带底色的行与上下行**文字对齐**；色带往 76px 的页边距里渗 19px 还剩 57px。按 `.body` 盒子判会误报成溢出。
 
 ### ⚠️ 改字号也要重测容量，不只是改 `u`
 
@@ -510,7 +510,7 @@ H.264/VP8 用 8×8 DCT + 4:2:0 色度抽样。**一个像素宽的特征在量�
 
 ### 硬约束三：面必须能被**区分**出来
 
-「用面不用线」只说了面比线好，**没说面之间怎么分层**。这一条是重建老 `为什么需要 Reviewer` 时实测出来的。
+「用面不用线」只说了面比线好，**没说面之间怎么分层**。这一条是重建一份已有真实 deck 时实测出来的。
 
 **4:2:0 抽样不只杀细线，它把色度一起降采样。** 后果是——
 
@@ -701,12 +701,12 @@ Reviewer deck 实测（8 页）：
 一个标准页 = **骨架 ＋ 任意一种正文原型**。
 
 <!-- BEGIN PARTS -->
-<!-- 由 `python3 parts.py --emit` 生成 · 不要手改这一段 -->
+<!-- 由 `./scripts/parts.py --emit` 生成 · 不要手改这一段 -->
 
 **33 个顶级零件 · 1 个页级修饰 · 6 个变体 · 18 个子元素**（另有 5 个是放映器界面，作者不写）
 
 「定义」那一列的行号是 **`newdeck.py` 剥过调参面板的版本**里的行号 —— 
-也就是你起手拿到的那份文件。`template.html` 没剥面板，行号不一样。
+也就是你起手拿到的那份文件。`assets/template.html` 没剥面板，行号不一样。
 
 「用途」取自 CSS 里那条规则的注释（前导或行尾）—— 所以它跟定义在一起，
 **改 CSS 的时候顺手改注释，表就不会漂移**。
@@ -1038,7 +1038,7 @@ Reviewer deck 实测（8 页）：
 | deck | 字体子集 | 其中 Type 3 | 体积 |
 |---|---|---|---|
 | template（7 页，零图片，纯文字） | 24 | 21 | **434 KB** |
-| 为什么需要 Reviewer（8 页，7 张图） | 282 | 277 | 2.52 MB |
+| 一份真实 deck（8 页，7 张图） | 282 | 277 | 2.52 MB |
 
 - **文字仍可提取** —— Type 3 没有破坏 ToUnicode，`pdftotext` 两份都能完整提出中文
 - **代价是体积** —— Type 3 是矢量绘图指令，比字形子集大得多
@@ -1063,8 +1063,8 @@ CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ## §9 · 发布前自检
 
 ```bash
-python3 check.py deck.html --pdf Deck.pdf
-python3 check.py --self-test          # 反向用例：确认坏了的东西真的会被抓到
+./scripts/check.py deck.html --pdf Deck.pdf
+./scripts/check.py --self-test          # 反向用例：确认坏了的东西真的会被抓到
 ```
 
 **自动查的：**
@@ -1118,8 +1118,8 @@ python3 check.py --self-test          # 反向用例：确认坏了的东西真�
 改 `--u` 一处，§3 §4 的派生值全部跟着变，**但 §4 的容量和 §6 的行数上限要重新实测**：
 
 ```bash
-sed 's/--u: 25px;/--u: 28px;/' template.html > trial.html
-python3 check.py trial.html
+sed 's/--u: 25px;/--u: 28px;/' assets/template.html > trial.html
+./scripts/check.py trial.html
 ```
 
 这是这套系统唯一的成本：**改基准要重新量容量。**

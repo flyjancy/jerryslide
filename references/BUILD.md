@@ -1,7 +1,11 @@
 # BUILD.md · 怎么跑一份 deck
 
 > **这份文档只讲操作。**
-> 该做成什么样 → `RULES.md` · 做错了会怎样 → `FAILURES.md` · 为什么这么定 → `PLAN.md`
+> 该做成什么样 → `references/RULES.md` · 做错了会怎样 → `references/FAILURES.md`
+>
+> **路径约定**：本 skill 的目录记为 `$SKILL`（`SKILL.md` 所在目录）。
+> 本文所有 `scripts/…`、`assets/…`、`references/…` 都相对于 `$SKILL`。
+> **命令在你的 deck 工作目录里执行**；deck 用路径指过去，不要写进 skill 目录。
 
 ---
 
@@ -9,18 +13,24 @@
 
 | | 位置 | 注意 |
 |---|---|---|
-| Python + fontTools + brotli + Pillow | `/tmp/slidenv/bin/python` | ⚠️ **在 `/tmp` 里，重启就没了** |
+| Python + fontTools + brotli + Pillow | `~/.cache/slide-venv/bin/python` | 缓存在家目录，重建才要联网 |
 | Chrome | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` | headless 出 PDF 和截图 |
 | poppler | `pdffonts` / `pdfinfo` | 只在验收时用 |
 | 缓存源字体 | `~/.cache/slide-fonts/` | `NotoSansSC-VF.ttf`（16.9 MB）· `Arimo-VF.ttf` |
 
 ### ⚠️ 最脆的一环
 
-**`/tmp/slidenv` 一丢，`build_font.py` 就跑不了，整套流程断掉。**
+**`~/.cache/slide-venv` 一丢，`build_font.py` 就跑不了，整套流程断掉。**
 
 ```bash
-python3 -m venv /tmp/slidenv
-/tmp/slidenv/bin/pip install fonttools brotli pillow
+python3 -m venv ~/.cache/slide-venv
+~/.cache/slide-venv/bin/pip install fonttools brotli pillow
+```
+
+一条命令也能补（顺手把源字体也下好）：
+
+```bash
+"$SKILL/scripts/build.sh" --doctor --fix
 ```
 
 系统 `python3` 也有 fontTools（`pip3 install --user --break-system-packages`），
@@ -31,15 +41,14 @@ python3 -m venv /tmp/slidenv
 ## 1 · 一条命令（推荐）
 
 ```bash
-cd "/Users/fengrui/Desktop/Share-AI-tools/_theme"
-./build.sh "../为什么需要 Reviewer/index.html"
+"$SKILL/scripts/build.sh" 我的deck.html
 ```
 
 它依次做三件事，任何一步失败就停：
 
 | | | |
 |---|---|---|
-| ① | **字体子集化 + 内联** | 改过任何文字都必须跑 —— 这是本仓库反复踩的坑（F4） |
+| ① | **字体子集化 + 内联** | 改过任何文字都必须跑 —— 这是反复踩过的坑（F4） |
 | ② | **导出 PDF** | Chrome headless |
 | ③ | **验收** | `check.py`，含字形覆盖 |
 
@@ -47,34 +56,36 @@ cd "/Users/fengrui/Desktop/Share-AI-tools/_theme"
 新字不在子集里、掉回系统字体，**屏幕上完全看不出来**，PDF 里才变成 Type 3。
 人工记不住，所以让它变成一条命令。
 
-`/tmp/slidenv` 丢了会自动重建。
+`~/.cache/slide-venv` 丢了会自动重建（`--doctor --fix`）。
 
 ---
 
 ## 1b · 手动五步（要看中间产物时用）
 
 ```bash
-cd "/Users/fengrui/Desktop/Share-AI-tools/_theme"
+SKILL=<本 skill 目录>                    # SKILL.md 所在目录
+SCRIPTS="$SKILL/scripts"
+ASSETS="$SKILL/assets"
 CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PY=/tmp/slidenv/bin/python
+PY="$HOME/.cache/slide-venv/bin/python"
 ```
 
 ### ① 起手：复制模板
 
 ```bash
-cp template.html my-deck.html
+cp "$ASSETS/template.html" my-deck.html
 ```
 
 **不要从空白文件写。** 令牌、六锚点骨架、打印规则、UI 隐藏规则全在模板里。
-从空白写必然漏掉其中几条，而且漏掉的都是**看不出来**的那几条（见 `FAILURES.md`）。
+从空白写必然漏掉其中几条，而且漏掉的都是**看不出来**的那几条（见 `references/FAILURES.md`）。
 
 ### ② 写页：用 `setpages.py`，别直接改大文件
 
 ```bash
-python3 setpages.py deck.html --extract    # 页面抽到 deck.pages.html（几 KB）
-$EDITOR deck.pages.html                    # 改页面 —— 在几 KB 的文件里改
-python3 setpages.py deck.html              # 贴回去（检查全过才落盘）
-python3 setpages.py deck.html --list       # 只列页面清单，不写
+"$SCRIPTS/setpages.py" deck.html --extract    # 页面抽到 deck.pages.html（几 KB）
+$EDITOR deck.pages.html                       # 改页面 —— 在几 KB 的文件里改
+"$SCRIPTS/setpages.py" deck.html              # 贴回去（检查全过才落盘）
+"$SCRIPTS/setpages.py" deck.html --list       # 只列页面清单，不写
 ```
 
 **为什么不能直接编辑 deck：** 一份 deck 约 440 KB，其中约 400 KB 是内联字体的
@@ -89,13 +100,13 @@ base64。要在里面给每一页找唯一锚点很难受 —— 而**锚点找�
 **这是硬保证，不是尽力而为** —— 写盘前自检五项（外壳前后逐字节比对、页面数、幂等、
 页面区不含边界标记、`<section>` 配平），**任何一条不过就不写文件**。
 
-反向用例：`python3 setpages.py --self-test`（10 个）
+反向用例：`"$SCRIPTS/setpages.py" --self-test`（10 个）
 
 **`<title>` 也归它管。** 标题住在外壳里（`#stage` 之外），但它是「这份 deck 的内容」：
 
 ```bash
-python3 setpages.py deck.html --title "这份 deck 的全名"   # 只换那一个标签
-python3 newdeck.py out.html "这份 deck 的全名"              # 或者起手就设好
+"$SCRIPTS/setpages.py" deck.html --title "这份 deck 的全名"   # 只换那一个标签
+"$SCRIPTS/newdeck.py" out.html "这份 deck 的全名"             # 或者起手就设好
 ```
 
 （`check.py` 会在 `<title>` 还是模板默认值的时候**判失败** —— 页面上完全看不见，
@@ -111,11 +122,11 @@ python3 newdeck.py out.html "这份 deck 的全名"              # 或者起手�
 ### ③ 字体：改完文字**必须**重跑
 
 ```bash
-$PY build_font.py my-deck.html              # 默认 --latin noto（纯思源黑体）
-$PY build_font.py my-deck.html --latin arimo # 想换窄拉丁时才用
+$PY "$SCRIPTS/build_font.py" my-deck.html              # 默认 --latin noto（纯思源黑体）
+$PY "$SCRIPTS/build_font.py" my-deck.html --latin arimo # 想换窄拉丁时才用
 ```
 
-**幂等**，可以无脑重跑。**不跑就会静默掉字**（见 `FAILURES.md` F4）。
+**幂等**，可以无脑重跑。**不跑就会静默掉字**（见 `references/FAILURES.md` F4）。
 
 ### ④ 验收
 
@@ -124,7 +135,7 @@ $PY build_font.py my-deck.html --latin arimo # 想换窄拉丁时才用
       --virtual-time-budget=6000 --print-to-pdf=/tmp/my-deck.pdf \
       "file://$PWD/my-deck.html"
 
-python3 check.py my-deck.html --pdf /tmp/my-deck.pdf
+$PY "$SCRIPTS/check.py" my-deck.html --pdf /tmp/my-deck.pdf
 ```
 
 **`check.py` 通过 = 可以交付。** 不通过别往下走。
@@ -155,8 +166,8 @@ done
 **屏幕上完全看不出来**，因为换回来的也是黑体，字形几乎一样。
 
 ```bash
-$PY build_font.py my-deck.html      # 改完字就跑，无脑跑
-python3 check.py my-deck.html       # 会告诉你有没有缺字
+$PY "$SCRIPTS/build_font.py" my-deck.html      # 改完字就跑，无脑跑
+$PY "$SCRIPTS/check.py" my-deck.html           # 会告诉你有没有缺字
 ```
 
 ### 坑 2 · 动令牌
@@ -166,7 +177,7 @@ python3 check.py my-deck.html       # 会告诉你有没有缺字
 把 `--u` 从 28 调到 26，九个字号全变，**但页面内容不变 → 当场溢出**。
 `check.py` 会抓，但如果你只看某几页截图，看不出来。
 
-**容量表在 `RULES.md §6`。要用之前先查。**
+**容量表在 `references/RULES.md §6`。要用之前先查。**
 
 ### 坑 3 · 截图窗口给了 `1280,807`
 
@@ -206,17 +217,17 @@ PDF 检查
 - **列宽**（`.row .k` 最多 4 个中文字）
 - **内容质量**（有没有论点、有没有落点句）
 
-> 这几条是**将来做 skill 时要先补进 `check.py` 的**。规则靠"记住"是迟早会失效的。
+> 这几条还**没进 `check.py`**。规则靠"记住"是迟早会失效的 —— 这是这套 skill 已知的缺口。
 
 ---
 
 ## 4 · 自检
 
 ```bash
-python3 check.py --self-test     # 跑 tests/ 下 4 个反向用例，退出码 0/1
+"$SKILL/scripts/check.py" --self-test     # 跑 assets/tests/ 下 4 个反向用例，退出码 0/1
 ```
 
-`tests/bad_A/B/C.html` 各自故意违规一种，`good.html` 应该通过。
+`assets/tests/bad_A/B/C.html` 各自故意违规一种，`good.html` 应该通过。
 **改了 `check.py` 之后必须跑这个** —— 确认它还能抓到问题。
 
 ---
@@ -225,10 +236,10 @@ python3 check.py --self-test     # 跑 tests/ 下 4 个反向用例，退出码 
 
 | 文件 | 作用 |
 |---|---|
-| `template.html` | 零件库，9 页展示所有原型 |
-| `demo.html` | 用模板做的 demo，9 页 |
-| `check.py` | 机械验收（静态 + 字形覆盖 + 几何 + PDF） |
-| `build_font.py` | 字体子集化 + 内联（幂等） |
-| `tests/` | 反向用例 |
-| `setpages.py` | 页面抽出／贴回（边界以外一字节不动） |
-| `parts.py` | 零件清单（定义 × 示范 × 文档），从 CSS 生成 |
+| `assets/template.html` | 零件库，**12 页**展示所有原型 |
+| `assets/demo.html` | 用模板做的 demo，9 页 |
+| `scripts/check.py` | 机械验收（静态 + 字形覆盖 + 几何 + PDF） |
+| `scripts/build_font.py` | 字体子集化 + 内联（幂等） |
+| `assets/tests/` | 反向用例 |
+| `scripts/setpages.py` | 页面抽出／贴回（边界以外一字节不动） |
+| `scripts/parts.py` | 零件清单（定义 × 示范 × 文档），从 CSS 生成 |

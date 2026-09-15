@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """newdeck.py —— 从模板起一份生产 deck。
 
-    python3 newdeck.py out.html ["deck 的 <title>"]
-    python3 newdeck.py --help
+    ./scripts/newdeck.py out.html ["deck 的 <title>"]
+    ./scripts/newdeck.py --help
 
 复制 template.html 并剥掉开发用的调参面板。
 
@@ -13,7 +13,7 @@
 为什么要有这个脚本
 ──────────────────
 模板自带一个「调参面板」（切分隔线 / u / 深浅），那是开发时看效果用的，
-生产 deck 里必须剥掉。**而剥错是有代价的** —— 本仓库真实踩过：
+生产 deck 里必须剥掉。**而剥错是有代价的** —— 真实踩过：
 
     用非贪婪正则 `<div id="pbtn">.*?</div>` 删面板，
     `.*?` 只吃到第一个 `</div>`：**外壳删了、内容留在文档里**。
@@ -25,10 +25,10 @@
 
 接下来
 ──────
-    python3 setpages.py out.html --extract   # 页面抽到 out.pages.html（几 KB）
+    ./scripts/setpages.py out.html --extract   # 页面抽到 out.pages.html（几 KB）
     # 编辑 out.pages.html
-    python3 setpages.py out.html             # 贴回去
-    ./build.sh out.html                      # 字体 → PDF → 验收
+    ./scripts/setpages.py out.html             # 贴回去
+    ./scripts/build.sh out.html                # 字体 → PDF → 验收
 """
 
 import pathlib
@@ -39,18 +39,15 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 
 def find_asset(name: str) -> pathlib.Path:
-    """找模板 / 文档，兼容两种布局：
+    """找 skill 里的模板 / 文档。
 
-        _theme/                    ← 开发工作区（平铺）
-            template.html
-            parts.py
-        slides/                    ← 打包后的 skill
+        $SKILL/                    ← 本 skill 目录（SKILL.md 所在处）
             assets/template.html
             references/RULES.md
             scripts/parts.py       ← __file__ 在这里
 
-    所以依次找：同目录 → 上一级的 assets/ → 上一级的 references/ → 同级的 assets/。
-    **同一个脚本在两种布局下都能跑** —— 这样 _theme 和 skill 不会漂移。
+    依次找：同目录 → 上一级的 assets/ → 上一级的 references/ → 同级的 assets/。
+    这样不管从哪个目录调用脚本都能定位到 skill 内的文件。
     """
     for c in (HERE / name,
               HERE.parent / "assets" / name,
@@ -62,7 +59,7 @@ def find_asset(name: str) -> pathlib.Path:
     raise SystemExit(
         f"✗ 找不到 {name}。\n"
         f"  找过：{HERE}/ · {HERE.parent}/assets/ · {HERE.parent}/references/\n"
-        f"  这份脚本要在 _theme/ 里跑，或者在打包后的 slides/scripts/ 里跑。")
+        f"  这个文件应该在被安装的 skill 目录里（scripts/ 的上一级）。")
 
 TPL = None   # 由 find_asset 在运行时定位（见下）
 
@@ -150,8 +147,8 @@ def main():
     out.write_text(h, encoding="utf-8")
     n = h.count('<section class="slide')
     print(f"✓ {out}  {len(h)//1024} KB · 含模板展示页 {n} 页 · title: {title!r}")
-    # 提示里给**相对当前目录的真实路径** —— 打包后脚本在 scripts/ 里，
-    # 写 "python3 setpages.py" 只有在 scripts 目录里才对，会误导。
+    # 提示里给**相对当前目录的真实路径** —— 安装后脚本在 scripts/ 里，
+    # 写裸文件名 "setpages.py" 只有在 scripts 目录里才对，会误导。
     def rel(name):
         try:
             return os.path.relpath(HERE / name, os.getcwd())
@@ -162,7 +159,7 @@ def main():
     print(f"       {sys.executable} {rel('setpages.py')} {out} --extract   # 页面抽出来改")
     print(f"       {sys.executable} {rel('setpages.py')} {out}             # 改完贴回去")
     print(f"       {rel('build.sh')} {out}")
-    print("     ↑ 用 build.sh，不要分开跑 build_font.py（见 FAILURES F4）")
+    print("     ↑ 用 build.sh，不要分开跑 build_font.py（见 references/FAILURES.md F4）")
 
 
 if __name__ == "__main__":

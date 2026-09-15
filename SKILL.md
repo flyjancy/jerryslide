@@ -18,10 +18,16 @@ disable-model-invocation: true
 
 ---
 
+> **路径约定**：本 skill 的目录记为 `$SKILL` —— 就是 `SKILL.md` 所在的那个目录，
+> π 加载 skill 时会给出。本文所有 `scripts/…`、`assets/…`、`references/…`
+> **都相对于 `$SKILL`**，调用时写成完整路径 `"$SKILL/scripts/…"`。
+> **命令在你的 deck 工作目录里执行** —— deck 是交付物，不要写进 skill 目录。
+> 这套 skill 不依赖 `$SKILL` 以外的任何自有文件。
+
 ## 0 · 第一步永远是环境体检
 
 ```bash
-./build.sh --doctor          # 只读，不碰任何文件
+"$SKILL/scripts/build.sh" --doctor          # 只读，不碰任何文件
 ```
 
 **不要跳过。** 缺环境的话，它原来会崩在第三步（导出 PDF）—— 而那时
@@ -45,17 +51,17 @@ disable-model-invocation: true
 
 ```bash
 # ① 起手（第二个参数是 deck 的 <title>，不给就用文件名）
-./scripts/newdeck.py 我的deck.html "我的 deck 全名"
+"$SKILL/scripts/newdeck.py" 我的deck.html "我的 deck 全名"
 
 # ② 把页面抽出来改 —— 抽出来是 ~10 KB，原文件 450 KB
-./scripts/setpages.py 我的deck.html --extract
+"$SKILL/scripts/setpages.py" 我的deck.html --extract
 #     编辑 我的deck.pages.html
 
 # ③ 贴回去（检查全过才落盘）
-./scripts/setpages.py 我的deck.html
+"$SKILL/scripts/setpages.py" 我的deck.html
 
 # ④ 字体 → PDF → 验收，一条命令
-./scripts/build.sh 我的deck.html
+"$SKILL/scripts/build.sh" 我的deck.html
 ```
 
 **为什么页面要抽出来改**：一份 deck 450 KB，其中 400 KB 是内联字体的 base64。
@@ -63,7 +69,7 @@ disable-model-invocation: true
 `setpages.py` 保证**边界以外逐字节不动**（抽出来再贴回去 `md5` 相同）。
 
 **`<title>` 也归它管**（它住在外壳里，但它是「这份 deck 的内容」）：
-`./scripts/setpages.py deck.html --title "新的全名"`
+`"$SKILL/scripts/setpages.py" deck.html --title "新的全名"`
 
 ---
 
@@ -154,7 +160,7 @@ disable-model-invocation: true
 ### 零件
 
 **完整清单（58 个，含示范页）：** `references/RULES.md` 里的 `BEGIN PARTS` 段，
-或者跑 `./scripts/parts.py --list`。
+或者跑 `"$SKILL/scripts/parts.py" --list`。
 
 **最常用的：**
 
@@ -190,7 +196,7 @@ disable-model-invocation: true
 | 弹性行里的元素被 `width:100%` 的兄弟挤成 0 宽 | **在 DOM 里但渲染不出来** | ✗ |
 | 溢出了就缩字号 | 破坏整套体系的前提 | ✓ 但**你会觉得是在帮忙** |
 
-**`check.py` 抓得到一半，另一半只有两件事能抓：渲图看一眼，或者读 `FAILURES.md`。**
+**`check.py` 抓得到一半，另一半只有两件事能抓：渲图看一眼，或者读 `references/FAILURES.md`。**
 
 ---
 
@@ -209,14 +215,17 @@ disable-model-invocation: true
 
 ## 7 · 目录
 
+**以下路径都相对于 `$SKILL`**（`SKILL.md` 所在目录）。
+
 ```
 references/RULES.md      完整规范 + 推导 + 实测数据（唯一真相源）
 references/BUILD.md      怎么跑（手动五步 + 四个坑）
-references/FAILURES.md   ★ 静默失败清单 F1–F10 + 被证伪的假设
+references/FAILURES.md   ★ 静默失败清单 F1–F11 + 被证伪的假设
 scripts/                 build.sh · check.py · build_font.py ·
                          newdeck.py · setpages.py · parts.py
 assets/template.html     12 页零件库
 assets/demo.html         用模板做的成品，9 页
+assets/tests/            反向用例（`check.py --self-test` 用）
 ```
 
 **改动先改 `references/RULES.md`**（唯一真相源），再考虑要不要同步到这一页。

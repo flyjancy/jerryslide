@@ -2,20 +2,19 @@
 #
 # build.sh —— 一条命令跑完：字体 → PDF → 验收 → 零件清单
 #
-#   用法：  ./build.sh deck.html [自定义.pdf]
-#           ./build.sh --doctor          体检环境（只读，不碰任何文件）
-#           ./build.sh --doctor --fix    顺手把能自动补的补上（建 venv / 下字体）
+#   用法：  ./scripts/build.sh deck.html [自定义.pdf]
+#           ./scripts/build.sh --doctor          体检环境（只读，不碰任何文件）
+#           ./scripts/build.sh --doctor --fix    顺手把能自动补的补上（建 venv / 下字体）
 #
 #   PDF 默认写在 deck 旁边（同名 .pdf）。
 #
-# 为什么需要这个脚本：**改完文字忘了重跑 build_font.py** 是本仓库反复踩的坑
-# （记在 FAILURES.md F4）。漏跑的后果是静默的 —— 新字不在字体子集里，
+# 为什么需要这个脚本：**改完文字忘了重跑 build_font.py** 是反复踩过的坑
+# （记在 references/FAILURES.md F4）。漏跑的后果是静默的 —— 新字不在字体子集里，
 # 掉回系统字体，**屏幕上完全看不出来**，PDF 里才变成 Type 3。
 # 人工记不住，所以让它变成一条命令。
 #
 # 为什么有 --doctor：环境缺东西时，**它原来会崩在第三步（导出 PDF）**——
 # 而第一二步（起手 + 写页面）已经把几十分钟的工作量花掉了。
-# 见 PACKAGING.md §3。
 
 set -euo pipefail
 
@@ -76,7 +75,7 @@ doctor() {
       echo "  ✓ venv          建好了（fontTools · brotli · pillow）"
     else
       echo "  ✗ venv          缺 ${VENV_DIR}（或里面的包不全）"
-      echo "        → ./build.sh --doctor --fix    （要联网 pip 装三个包）"
+      echo "        → ./scripts/build.sh --doctor --fix    （要联网 pip 装三个包）"
       bad=1
     fi
   fi
@@ -96,7 +95,7 @@ doctor() {
       fi
     else
       echo "  ✗ 字体          缺 $NOTO"
-      echo "        → 联网：./build.sh --doctor --fix        （下载 16.9 MB，约 30 秒）"
+      echo "        → 联网：./scripts/build.sh --doctor --fix        （下载 16.9 MB，约 30 秒）"
       echo "        → 离线：手动把任意 Noto Sans SC 变量字体放到上面那个路径（需 >1 MB）"
       bad=1
     fi
@@ -139,8 +138,8 @@ fi
 
 DECK_IN="${1:-}"
 if [ -z "$DECK_IN" ]; then
-  echo "用法: ./build.sh <deck.html>" >&2
-  echo "      ./build.sh --doctor [--fix]     体检环境" >&2
+  echo "用法: ./scripts/build.sh <deck.html>" >&2
+  echo "      ./scripts/build.sh --doctor [--fix]     体检环境" >&2
   exit 2
 fi
 if [ ! -f "$DECK_IN" ]; then
@@ -177,7 +176,7 @@ echo "③ 验收"
 [ $? -eq 0 ] || exit 1
 
 # ④ 零件漂移 —— 查的是 template.html，所以只有给模板本身 / demo 跑才有意义。
-#    按文件名判断，不按目录 —— 打包后模板在 assets/ 里。
+#    按文件名判断，不按目录 —— 安装后模板在 assets/ 里。
 case "$NAME" in
   template|demo)
     echo
