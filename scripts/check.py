@@ -246,6 +246,16 @@ def static_checks(src, path=None):
                 print("  ✗ 第 2 页不是目录 —— 目录必须紧跟封面（RULES.md 页型表）")
             n += 1
 
+        # 每个内容页都要有 h1（这页的论点）。省掉它的页只剩图与骨架，
+        # 观众不知道在看什么 —— 2026-09-17 真发生过：把实拍页做成纯图页，
+        # 页面上「看着还行」，但那页没有论点。
+        no_h1 = [i for i, s in enumerate(secs, 1) if not re.search(r'<h1[^>]*>', s)]
+        if no_h1:
+            print(f"  ✗ 这些页没有 h1：{no_h1} —— 每个内容页都要有论点（RULES.md 骨架）")
+            n += 1
+        else:
+            print("  ✓ 每页都有 h1")
+
     # title —— 三次冷启动测试里，一个 agent 把模板的 title 原样交付了。
     # <title> 住在外壳里，页面上完全看不见，但窗口标题/浏览器标签/PDF 元数据都用它。
     TPL_TITLE = "幻灯片规范 · 零件库"

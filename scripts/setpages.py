@@ -165,8 +165,16 @@ def list_pages(pages: str) -> list[tuple[int, str, str]]:
         end = seg.find("</section>")
         seg = seg[:end] if end > 0 else seg[:2000]
         h1 = re.search(r'<h1[^>]*>(.*?)</h1>', seg, re.S)
-        t = re.sub(r"<br\s*/?>", " ", h1.group(1))
-        t = re.sub(r"<[^>]+>", "", t).strip() if h1 else ""
+        if h1:
+            t = re.sub(r"<br\s*/?>", " ", h1.group(1))
+            t = re.sub(r"<[^>]+>", "", t).strip()
+        else:
+            # 缺 h1 是内容缺陷（RULES.md：每个内容页都要有论点），
+            # 但这里只是给人看的列表，不得以 traceback 崩掉。
+            # 2026-09-17 真实崩过：原写成 t = re.sub(..., h1.group(1))，
+            # None 判断只护住了下一行。
+            k = re.search(r'class="kicker">(.*?)<', seg, re.S)
+            t = f"（无 h1 · {k.group(1)}）" if k else "（无 h1）"
         out.append((i, cls, t))
     return out
 
