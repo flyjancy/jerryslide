@@ -125,6 +125,22 @@ window.onerror = function(m, s, l){
       it.over  = +(Math.max(worstV, worstH)/sc).toFixed(1);
       it.extent= +(deepest/sc).toFixed(1);
     }
+    /* 标题行数 —— 量出来的，不靠数 <br>。
+       内容页标题必须一行（红竖块高 2.4u ＝ 一行；两行时竖块只够第一行，
+       而且白白吃掉 67px）。封面例外（.cover h1 是 84px 的品牌标题，
+       旁边没有竖块，两行是设计）。 */
+    var h1 = s.querySelector('h1');
+    if (h1){
+      var cs = getComputedStyle(h1);
+      var lh = parseFloat(cs.lineHeight);
+      if (!isFinite(lh) || lh <= 0) lh = parseFloat(cs.fontSize) * 1.16;
+      var hh = h1.getBoundingClientRect().height / sc;
+      it.h1lines = Math.max(1, Math.round(hh / lh));
+      it.h1br = /<br\s*\/?>/i.test(h1.innerHTML);
+      it.cover = s.classList.contains('cover');
+    } else {
+      it.h1lines = 0;
+    }
     o.slides.push(it);
     s.style.display = prev;
   });
@@ -354,6 +370,21 @@ def overflow_check(chrome, path):
         else:
             note = "✓"
         print(f"  {s['p']:3d}  {s['body']:7.1f}  {s['extent']:9.1f}  {slack:+8.1f}   {dim}   {note}")
+
+    # 标题行数：内容页必须一行。红竖块高 2.4u ＝ h1 一行，两行时竖块只够第一行，
+    # 而且白白吃掉一行标题的高度（67px）。封面例外。
+    multi = [s for s in data["slides"]
+             if s.get("h1lines", 0) >= 2 and not s.get("cover")]
+    brs = [s["p"] for s in multi if s.get("h1br")]
+    if multi:
+        pages = "、".join(str(s["p"]) for s in multi)
+        print(f"  ✗ 标题两行：页 {pages}")
+        if brs:
+            print(f"      —— 页 {'、'.join(map(str, brs))} 是写作时手动折的（<h1> 里有 <br>）")
+        print("      改成一行：删字，不要缩字号（铁律 5）。红竖块只对齐一行。")
+        bad += 1
+    else:
+        print("  ✓ 标题全部一行（封面除外）")
     print()
     return bad
 

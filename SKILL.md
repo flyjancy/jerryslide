@@ -132,6 +132,7 @@ disable-model-invocation: true
 
 ```
 ① .ttl      标题行  .bar（红竖块）+ h1（红色，全页唯一标题）
+                          ← 标题必须一行；折行 check.py 判失败（封面例外）
 ② .lead     导语（可选）      ← 写了就和落点句抢地方
 ③ .body     正文区            ← 唯一 flex:1；必须 overflow:hidden
 ④ .quote    落点句（可选）     ← 永远贴在这个位置
