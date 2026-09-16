@@ -226,6 +226,26 @@ def static_checks(src, path=None):
         print("      —— 应为各 1。结构已被破坏，setpages.py 会拒绝读写。")
         n += 1
 
+    # 结构顺序：① 封面 → ② 目录。
+    # 顺序错了页面上「看着都正常」—— 2026-09-17 真发生过：插目录时的锚点字串是 'Why'，
+    # 命中了封面标题 "Why your plan needs a smarter reviewer"，目录被插到封面之前；
+    # 而目检那一步又正好把封面看成了目录 —— 两道防线同时失效（FAILURES.md F8c）。
+    secs = re.findall(r'<section class="slide.*?</section>', src, re.S)
+    if secs and re.search(r"var\(--u\)", raw_css):
+        m0 = re.search(r'<section class="([^"]*)"', secs[0])
+        first_is_cover = bool(m0) and "cover" in m0.group(1)
+        second_is_toc = len(secs) > 1 and 'class="toc"' in secs[1]
+        if first_is_cover and second_is_toc:
+            print("  ✓ 结构顺序：① 封面 → ② 目录")
+        else:
+            if not first_is_cover:
+                print("  ✗ 第 1 页不是封面 —— 封面必须排在最前（RULES.md 页型表）")
+            elif len(secs) < 2:
+                print("  ✗ 没有第 2 页 —— 每份 deck 必有目录页（RULES.md 页型表）")
+            else:
+                print("  ✗ 第 2 页不是目录 —— 目录必须紧跟封面（RULES.md 页型表）")
+            n += 1
+
     # title —— 三次冷启动测试里，一个 agent 把模板的 title 原样交付了。
     # <title> 住在外壳里，页面上完全看不见，但窗口标题/浏览器标签/PDF 元数据都用它。
     TPL_TITLE = "幻灯片规范 · 零件库"
