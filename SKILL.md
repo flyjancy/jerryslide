@@ -2,7 +2,7 @@
 name: jerryslide
 description: >
   做在线会议共享屏幕用的 HTML slide —— 自包含单文件、零外链、离线可用、可导 PDF。
-  中英混排、学术简约风（白底 + 品牌红）。含 12 页零件库模板、构建脚本、机械验收。
+  中英混排、学术简约风（白底 + 红色）。含 12 页零件库模板、构建脚本、机械验收。
   不适用于：要 .pptx / Google Slides 的；纯英文受众的；投影仪现场演讲的（字号推导完全不同）；
   需要逐元素动画的（这套是「一次按键一页」）。
 disable-model-invocation: true
@@ -10,7 +10,9 @@ disable-model-invocation: true
 
 # JerrySlide · 屏幕共享用的 slide
 
-**这套规范的前提很窄**：屏幕共享 · 对方窗口 ≥800px · 中英混排 · 芯原品牌红。
+**命名约定**：配色统一称“红色”，不附带公司或品牌名称；模板、示例的封面和页脚不预置公司名称。
+
+**这套规范的前提很窄**：屏幕共享 · 对方窗口 ≥800px · 中英混排 · 红色。
 **前提之外它不是中性的，它会主动害人** —— 所以入口是显式的，你不会被自动匹配到它。
 
 > **你是被 `/skill:jerryslide` 显式叫起来的。** 先确认下面「不适用」那节没命中，
@@ -121,7 +123,7 @@ disable-model-invocation: true
 
 --paper #ffffff   --ink #101010   --ink2 #454545
 --muted #767676   ← 最浅合格的灰（4.54:1）
---accent #a70e13  ← 芯原红
+--accent #a70e13  ← 红色
 --face #f2f2f2  --face-2 #eaeaea  --face-3 #e4e4e4   ← 面的阶梯
 --line: 0px solid #b8b8b8        ← 已决定：全部不用线
 ```

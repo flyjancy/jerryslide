@@ -61,8 +61,7 @@
      需要线的地方（页眉线）单独写 2px：1px 会被 H.264 杀掉（实测保留 4%）。
      --line 保留为空值，让 .rows/.arg 的 border 自动收起。 */
   --line:       0px solid #b8b8b8;
-  --accent:     #a70e13;   /*  7.73:1  芯原红（verisilicon.com 主色，       */
-                           /*           logo 实测 #a80800，同一色）         */
+  --accent:     #a70e13;   /*  7.73:1  红色（白底对比度） */
   --accent-bg:  #f5dfe0;   /*  1.27:1  ← 浅红底，再浅看不出是块底色         */
 
   /* ── 深色场景（仅当 deck 需要装深色截图，见 I4）─────────────────────
@@ -170,7 +169,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 .row .v{font-size:var(--fs-body);color:var(--ink2);line-height:1.45} /* 一级·内容 */
 
 /* 强调行：只靠底色就够。
-   品牌红 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
+   红色 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
    但仍然不用 —— 一块底色已经把话说完了，再加红字是重复强调。 */
 .row.hi{background:var(--accent-bg);border-bottom-color:var(--accent-bg)}
 
@@ -254,7 +253,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
    备注 / 帮助 / 进度条
    ════════════════════════════════════════════════════════════════════════ */
 /* 尺寸用固定 px：这是演讲者 UI，不在舞台里，不跟 --u 缩放。
-   但颜色必须走令牌 —— 否则换品牌色时这里会静默漏掉。 */
+   但颜色必须走令牌 —— 否则换强调色时这里会静默漏掉。 */
 #notes{position:fixed;left:0;right:0;bottom:0;background:var(--ui-bg);
   border-top:var(--line);padding:18px 26px;font-size:15px;line-height:1.6;
   color:var(--ink2);display:none;z-index:40;max-height:38vh;overflow:auto}
@@ -363,7 +362,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
       <div class="ti"><span class="tn">04</span><span class="tt">怎么用</span><span class="td">一个能闭环的工作流</span></div>
     </div>
   </div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">零件库 · 原型展示</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">零件库 · 原型展示</span><span class="pno"></span></div>
 </section>
 
 <section class="slide sect" data-notes="章节页：每个 section 开头单独一页，让观众知道换话题了。">

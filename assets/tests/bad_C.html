@@ -50,8 +50,7 @@
   --ink2:       #454545;   /*  9.59:1  次级文字                         */
   --muted:      #767676;   /*  4.54:1  ← 最浅的合格灰，不能再浅         */
   --line:       #d0d0d0;   /*  1.54:1  ← 分隔线门槛，再浅投影上会消失   */
-  --accent:     #a70e13;   /*  7.73:1  芯原红（verisilicon.com 主色，       */
-                           /*           logo 实测 #a80800，同一色）         */
+  --accent:     #a70e13;   /*  7.73:1  红色（白底对比度） */
   --accent-bg:  #f5dfe0;   /*  1.27:1  ← 浅红底，再浅看不出是块底色         */
 
   /* ── 深色场景（仅当 deck 需要装深色截图，见 I4）─────────────────────
@@ -162,7 +161,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 .row .v{font-size:var(--fs-body);color:var(--ink2);line-height:1.45} /* 一级·内容 */
 
 /* 强调行：只靠底色就够。
-   品牌红 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
+   红色 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
    但仍然不用 —— 一块底色已经把话说完了，再加红字是重复强调。 */
 .row.hi{background:var(--accent-bg);border-bottom-color:var(--accent-bg)}
 
@@ -246,7 +245,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
    备注 / 帮助 / 进度条
    ════════════════════════════════════════════════════════════════════════ */
 /* 尺寸用固定 px：这是演讲者 UI，不在舞台里，不跟 --u 缩放。
-   但颜色必须走令牌 —— 否则换品牌色时这里会静默漏掉。 */
+   但颜色必须走令牌 —— 否则换强调色时这里会静默漏掉。 */
 #notes{position:fixed;left:0;right:0;bottom:0;background:var(--ui-bg);
   border-top:1px solid var(--line);padding:18px 26px;font-size:15px;line-height:1.6;
   color:var(--ink2);display:none;z-index:40;max-height:38vh;overflow:auto}

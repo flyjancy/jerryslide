@@ -56,8 +56,7 @@
      2px + 更深的灰才能保留 ~79%。线宽比对比度重要 —— 加深一条 1px 线救不了它。 */
   --line:       2px solid #b8b8b8;   /* 编码后 22.0%，纸白对比 27.8% */
   --line-hair:  1px solid #d0d0d0;   /* 只留给不投影、不上会的地方 */
-  --accent:     #a70e13;   /*  7.73:1  芯原红（verisilicon.com 主色，       */
-                           /*           logo 实测 #a80800，同一色）         */
+  --accent:     #a70e13;   /*  7.73:1  红色（白底对比度） */
   --accent-bg:  #f5dfe0;   /*  1.27:1  ← 浅红底，再浅看不出是块底色         */
 
   /* ── 深色场景（仅当 deck 需要装深色截图，见 I4）─────────────────────
@@ -165,7 +164,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 .row .v{font-size:var(--fs-body);color:var(--ink2);line-height:1.45} /* 一级·内容 */
 
 /* 强调行：只靠底色就够。
-   品牌红 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
+   红色 #a70e13 压在浅红底上是 6.08:1，技术上允许用红字；
    但仍然不用 —— 一块底色已经把话说完了，再加红字是重复强调。 */
 .row.hi{background:var(--accent-bg);border-bottom-color:var(--accent-bg)}
 
@@ -249,7 +248,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
    备注 / 帮助 / 进度条
    ════════════════════════════════════════════════════════════════════════ */
 /* 尺寸用固定 px：这是演讲者 UI，不在舞台里，不跟 --u 缩放。
-   但颜色必须走令牌 —— 否则换品牌色时这里会静默漏掉。 */
+   但颜色必须走令牌 —— 否则换强调色时这里会静默漏掉。 */
 #notes{position:fixed;left:0;right:0;bottom:0;background:var(--ui-bg);
   border-top:var(--line);padding:18px 26px;font-size:15px;line-height:1.6;
   color:var(--ink2);display:none;z-index:40;max-height:38vh;overflow:auto}
@@ -346,7 +345,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
   <div class="ctop"></div>
   <h1>Slides that survive<br>screen sharing</h1>
   <p class="sub">在线会议共享屏幕时，幻灯片到底会被什么弄坏 —— 以及四条能救回来的规则</p>
-  <div class="ctag">verisilicon · 内部技术分享</div>
+  <div class="ctag">内部技术分享</div>
 </section>
 
 <!-- ═══ 2 · 目录 ═══ -->
@@ -361,7 +360,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
       <div class="ti"><span class="tn">04</span><span class="tt">怎么用</span><span class="td">一个能闭环的工作流</span></div>
     </div>
   </div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 
 <!-- ═══ 3 · 章节页 01 ═══ -->
@@ -384,7 +383,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
     </div>
   </div>
   <div class="quote">字号够大还不够，细节也得够粗。</div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 
 <!-- ═══ 6 · 章节页 03 ═══ -->
@@ -406,7 +405,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
       <div class="row"><span class="n">04</span><span class="k">结论唯一<small>ONE IDEA</small></span><span class="v">落点句只写一句，写两句就是两页</span></div>
     </div>
   </div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 
 <!-- ═══ 4 · 两栏对照 ═══ -->
@@ -432,7 +431,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
       </div>
     </div>
   </div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 
 <!-- ═══ 5 · 循环 ═══ -->
@@ -452,7 +451,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
       <div class="lback"><span>删到不超为止 —— 余量不是"差不多"，是硬指标</span></div>
     </div>
   </div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 
 <!-- ═══ 6 · 收尾 ═══ -->
@@ -467,7 +466,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
     </div>
   </div>
   <div class="quote">让每一页在最窄的窗口里都站得住。</div>
-  <div class="foot"><span>verisilicon</span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
+  <div class="foot"><span></span><span class="ftitle">Slides that survive screen sharing</span><span class="pno"></span></div>
 </section>
 </div><!-- /#stage -->
 
