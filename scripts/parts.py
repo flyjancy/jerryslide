@@ -149,10 +149,10 @@ def _trailing_desc(css: str, rule_end: int) -> str:
 
     ⚠️ 模板里 `①②③④⑤` 是这么写的：
 
-        .head{…}                    /* ① 页眉   */
-        .kicker{…}
+        .ttl{…}                     /* ① 标题行 */
+        .ttl .bar{…}
 
-    它贴在 .head 自己的收尾大括号那一行，**不是** .kicker 的前导注释。
+    它贴在 .ttl 自己的收尾大括号那一行，**不是** .ttl .bar 的前导注释。
     只认前导注释会把它判给下一条，说明全部错位一行。
     """
     m = re.match(r"[ \t]*/\*((?:(?!\*/).)*?)\*/[ \t]*(?=\n|$)", css[rule_end:], re.S)
@@ -164,7 +164,7 @@ def parse_rules(css: str) -> list[dict]:
 
     注释归属分两趟，因为模板里两种写法都有：
 
-        .head{…}                    /* ① 页眉 */      ← 行尾注释，属于 .head
+        .ttl{…}                     /* ① 标题行 */    ← 行尾注释，属于 .ttl
         /* ── 编号条目表 ── */
         .rows{…}                                     ← 前导注释，属于 .rows
 

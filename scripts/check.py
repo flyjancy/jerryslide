@@ -256,6 +256,14 @@ def static_checks(src, path=None):
         else:
             print("  ✓ 每页都有 h1")
 
+        # 已废弃的零件：页眉（.head / .kicker / .hline）2026-09-17 被标题行 .ttl 取代。
+        # 老模板里它们长得像「标题」，混回来就又变成一页两个标题。
+        dead = [k for k in ('class="head"', 'class="kicker"', 'class="hline"') if k in src]
+        if dead:
+            print(f"  ✗ 用了已废弃的页眉零件：{dead} —— 改用 .ttl（红竖块 ＋ 红 h1），"
+                  f"标题行不再要小节标签（RULES.md 骨架）")
+            n += 1
+
     # title —— 三次冷启动测试里，一个 agent 把模板的 title 原样交付了。
     # <title> 住在外壳里，页面上完全看不见，但窗口标题/浏览器标签/PDF 元数据都用它。
     TPL_TITLE = "幻灯片规范 · 零件库"

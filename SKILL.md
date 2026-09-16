@@ -128,15 +128,14 @@ disable-model-invocation: true
 --line: 0px solid #b8b8b8        ← 已决定：全部不用线
 ```
 
-### 页面骨架（六个锚点，只有 ④ 伸缩）
+### 页面骨架（五个锚点，只有 ③ 伸缩）
 
 ```
-① .head     页眉  .kicker（小节）+ .hline（2px，全 deck 唯一允许的线）
-② h1        主标题（英文）
-③ .lead     导语（可选）      ← 写了就和落点句抢地方
-④ .body     正文区            ← 唯一 flex:1；必须 overflow:hidden
-⑤ .quote    落点句（可选）     ← 永远贴在这个位置
-⑥ .foot     页脚  中 = deck 全名 · 右 = 页码
+① .ttl      标题行  .bar（红竖块）+ h1（红色，全页唯一标题）
+② .lead     导语（可选）      ← 写了就和落点句抢地方
+③ .body     正文区            ← 唯一 flex:1；必须 overflow:hidden
+④ .quote    落点句（可选）     ← 永远贴在这个位置
+⑤ .foot     页脚  中 = deck 全名 · 右 = 页码
 ```
 
 ### 容量（`u=28`）

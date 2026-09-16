@@ -29,7 +29,7 @@
   --fs-key:    calc(var(--u) * 1.20);    /* n=+1   30px  条目表关键词     */
   --fs-body:   var(--u);                 /* n= 0   25px  正文 —— 下限     */
   --fs-note:   calc(var(--u) * 0.83);    /* n=-1   21px  注解 / 代价说明  */
-  --fs-kicker: calc(var(--u) * 0.69);    /* n=-2   17px  小节标签         */
+  --fs-kicker: calc(var(--u) * 0.69);    /* n=-2   17px  编号/小注/页码   */
   --fs-foot:   calc(var(--u) * 0.58);    /* n=-3   14px  页脚 / 页码      */
 
   /* ── 行高 ──────────────────────────────────────────────────────────── */
@@ -124,19 +124,21 @@ b,strong{font-weight:600}
   --face:var(--face-d); --face-2:var(--face-2-d); --face-3:var(--face-3-d)}
 
 /* ════════════════════════════════════════════════════════════════════════
-   §4 页面骨架 —— 六个固定锚点，只有 ④ 伸缩
+   §4 页面骨架 —— 五个固定锚点，只有 ④ 伸缩
    ════════════════════════════════════════════════════════════════════════ */
-.head{display:flex;align-items:center;gap:var(--gap-tight);
-  flex:none;margin-bottom:calc(var(--u) * 1.5)}                 /* ① 页眉   */
-.kicker{font-size:var(--fs-kicker);letter-spacing:.20em;color:var(--accent);
-  font-weight:600;white-space:nowrap;text-transform:uppercase}
-.hline{flex:1;height:2px;background:#b8b8b8}
-/* 深色页页眉线：调参层删掉后由这里接管（原 demo 层 --sep-cd 的值） */
-.slide.dark .hline{background:#4a515c}
+/* ① 标题行：红竖块 ＋ 红标题。
+   删掉页眉（kicker ＋ 2px 线）不只消掉「红字与黑大字谁是标题」的歧义，
+   还每页让出 65px（页眉行 23px ＋ 下间距 1.5u＝42px）——
+   比落点句多一行（60px）还多。红竖块是「面」，比那条 2px 线抗压（铁律 1）。 */
+.ttl{display:flex;align-items:center;gap:calc(var(--u) * 0.8);
+  flex:none;margin-bottom:var(--gap-frame)}
+.ttl .bar{flex:none;width:calc(var(--u) * 0.64);height:calc(var(--u) * 2.4);
+  background:var(--accent)}
+.ttl h1{margin-bottom:0}
 
 h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tight);
-  font-weight:700;letter-spacing:-.005em;flex:none;
-  margin-bottom:var(--gap-frame)}                               /* ② 主标题 */
+  font-weight:700;letter-spacing:-.005em;color:var(--accent);flex:none;
+  margin-bottom:var(--gap-frame)}                               /* ① 主标题 */
 .lead{font-size:var(--fs-lead);line-height:var(--lh-body);color:var(--ink2);
   flex:none;margin-bottom:var(--gap-frame);max-width:calc(var(--u) * 44)}  /* ③ 导语 */
 .body{flex:1;min-height:0;overflow:hidden}                      /* ④ 正文区 */
@@ -150,7 +152,6 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 /* 页脚 = 文档身份条，两个槽，语义固定：
      中 = deck 全名    每页相同
      右 = 页码         唯一变动的
-   小节位置由页眉的 .kicker 承担 —— 页脚再写一遍是重复。
 
    ⚠️ 讲者不上每页。**作者只出现在封面**（.ctag：主题标签 · Fengrui）。
       每页都署名是冗余：读者翻到任何一页都知道这是哪份 deck，
@@ -406,8 +407,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="目录：每份 deck 必有。条目 ≤5 行；section 更多就按主题归组（实测 6 行余量只剩 4.4px，见 RULES.md 复合零件表）。">
-  <div class="head"><span class="kicker">目录</span><span class="hline"></span></div>
-  <h1>What's in here</h1>
+  <div class="ttl"><span class="bar"></span><h1>What's in here</h1></div>
   <div class="body">
     <div class="toc" style="margin-top:calc(var(--u)*0.5)">
       <div class="ti"><span class="tn">01</span><span class="tt">前提变了</span><span class="td">屏幕共享不是投影仪</span></div>
@@ -427,8 +427,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="条目表：u=28px、无导语时放得下 3 行（含英文小注）。">
-  <div class="head"><span class="kicker">01 · 小节名</span><span class="hline"></span></div>
-  <h1>English headline</h1>
+  <div class="ttl"><span class="bar"></span><h1>English headline</h1></div>
   <div class="body">
     <div class="rows">
       <div class="row"><span class="n">01</span><span class="k">关键词<small>label</small></span><span class="v">右列一句话说明。小注可以不加。</span></div>
@@ -441,8 +440,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="最常用的原型。u=28 下三条舒服，五条要加 .tight。">
-  <div class="head"><span class="kicker">02 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: arguments</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: arguments</h1></div>
   <div class="body">
     <div class="args">
       <div class="arg"><span class="an">01</span><span class="at">一条一句话，宁短勿长。</span></div>
@@ -456,8 +454,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="两栏对照。加了 .acc 的一栏是强调栏。此页有导语，故无落点句。">
-  <div class="head"><span class="kicker">03 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: two columns</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: two columns</h1></div>
   <p class="lead">用于正反对比。加 <b>.acc</b> 的一栏标签变红、内容加粗。</p>
   <div class="body">
     <div class="pair">
@@ -476,8 +473,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="只在需要表达「会回到起点」时用。">
-  <div class="head"><span class="kicker">04 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: the loop</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: the loop</h1></div>
   <div class="body">
     <div class="loop">
       <div class="lrow">
@@ -496,8 +492,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide dark" data-notes="深色页：截图会「融进页面」。⚠️ 但深/浅是整份 deck 的决定，不许逐页切 —— 见 RULES §5 硬约束五。">
-  <div class="head"><span class="kicker">05 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: dark evidence</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: dark evidence</h1></div>
   <p class="lead">深色页让截图融进页面。深/浅是整份 deck 的决定。</p>
   <div class="body" style="display:flex;flex-direction:column">
     <div class="shot" style="width:100%;aspect-ratio:7/1;display:flex;align-items:center;justify-content:center">截图放这里 · 裁成宽条 · 转 WebP q88 后 base64 内联，保持单文件</div>
@@ -508,8 +503,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide end" data-notes="收尾：三句话，把整份 deck 收拢。">
-  <div class="head"><span class="kicker">小结</span><span class="hline"></span></div>
-  <h1>Closing headline</h1>
+  <div class="ttl"><span class="bar"></span><h1>Closing headline</h1></div>
   <div class="body">
     <div class="args">
       <div class="arg"><span class="an">01</span><span class="at">第一句结论。</span></div>
@@ -521,8 +515,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="新增零件：结论条 + 并排卡片。都靠底色分组，不用描边。">
-  <div class="head"><span class="kicker">06 · 新增零件</span><span class="hline"></span></div>
-  <h1>Band and cards</h1>
+  <div class="ttl"><span class="bar"></span><h1>Band and cards</h1></div>
   <div class="body" style="display:flex;flex-direction:column;gap:calc(var(--u)*0.8)">
     <div class="band">结论条：一页最多一条。它是这页的落点 —— 只是不用落点句那个红竖线的形式。</div>
     <div class="cards">
@@ -540,8 +533,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 
 <section class="slide" data-notes="新增零件：横向流程 + 圆点列表 + 行内高亮 + 行内代码。">
-  <div class="head"><span class="kicker">07 · 新增零件</span><span class="hline"></span></div>
-  <h1>Flow and bullets</h1>
+  <div class="ttl"><span class="bar"></span><h1>Flow and bullets</h1></div>
   <div class="body" style="display:flex;flex-direction:column;gap:calc(var(--u)*0.8)">
     <div class="flow">
       <span class="pill">写计划</span><span class="arw">──▶</span>
@@ -558,8 +550,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
   <div class="foot"><span class="ftitle">零件库 · 原型展示</span><span class="pno"></span></div>
 </section>
 <section class="slide" data-notes="紧凑条目：三条带小注的行 + 一行代价说明。.rows.tight 把行距从 0.44u 收到 0.24u，每行省 11px。实测：一条带 <small> 的行是 98.2px（高在 .k 的两行上，不在 .v），四条就是 392.9px —— 正文区 334.8px 装不下。所以 .tight 不是万能：装不下的时候删的是字，不是字号。">
-  <div class="head"><span class="kicker">06 · 零件</span><span class="hline"></span></div>
-  <h1>Archetype: compact rows</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: compact rows</h1></div>
   <div class="body">
     <div class="rows tight">
       <div class="row"><span class="n">01</span><span class="k">小注条目<small>WITH NOTE</small></span><span class="v">带英文小注的行，只有收紧行距才装得下四条。</span></div>

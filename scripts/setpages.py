@@ -149,9 +149,8 @@ def check_pages(pages: str, where: str) -> list[str]:
         end = seg.find("</section>")
         seg = seg[:end] if end > 0 else seg[:2000]
         h1 = re.search(r'<h1[^>]*>(.*?)</h1>', seg, re.S)
-        kick = re.search(r'class="kicker"[^>]*>(.*?)<', seg, re.S)
-        t = h1 or kick
-        titles.append(re.sub(r"<[^>]+>", "", t.group(1)).strip() if t else "")
+        # h1 必有（check.py 强制）—— 这里不再有 kicker 兜底
+        titles.append(re.sub(r"<[^>]+>", "", h1.group(1)).strip() if h1 else "")
     return titles
 
 
@@ -173,8 +172,7 @@ def list_pages(pages: str) -> list[tuple[int, str, str]]:
             # 但这里只是给人看的列表，不得以 traceback 崩掉。
             # 2026-09-17 真实崩过：原写成 t = re.sub(..., h1.group(1))，
             # None 判断只护住了下一行。
-            k = re.search(r'class="kicker">(.*?)<', seg, re.S)
-            t = f"（无 h1 · {k.group(1)}）" if k else "（无 h1）"
+            t = "（无 h1）"
         out.append((i, cls, t))
     return out
 

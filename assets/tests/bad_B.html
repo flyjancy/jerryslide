@@ -109,16 +109,20 @@ b,strong{font-weight:600}
   --accent:var(--accent-d); --accent-bg:var(--accent-bg-d)}
 
 /* ════════════════════════════════════════════════════════════════════════
-   §4 页面骨架 —— 六个固定锚点，只有 ④ 伸缩
+   §4 页面骨架 —— 五个固定锚点，只有 ④ 伸缩
    ════════════════════════════════════════════════════════════════════════ */
-.head{display:flex;align-items:center;gap:var(--gap-tight);
-  flex:none;margin-bottom:calc(var(--u) * 1.5)}                 /* ① 页眉   */
-.kicker{font-size:var(--fs-kicker);letter-spacing:.20em;color:var(--accent);
-  font-weight:600;white-space:nowrap;text-transform:uppercase}
-.hline{flex:1;height:1px;background:var(--line)}
+/* ① 标题行：红竖块 ＋ 红标题。
+   删掉页眉（kicker ＋ 2px 线）不只消掉「红字与黑大字谁是标题」的歧义，
+   还每页让出 65px（页眉行 23px ＋ 下间距 1.5u＝42px）——
+   比落点句多一行（60px）还多。红竖块是「面」，比那条 2px 线抗压（铁律 1）。 */
+.ttl{display:flex;align-items:center;gap:calc(var(--u) * 0.8);
+  flex:none;margin-bottom:var(--gap-frame)}
+.ttl .bar{flex:none;width:calc(var(--u) * 0.64);height:calc(var(--u) * 2.4);
+  background:var(--accent)}
+.ttl h1{margin-bottom:0}
 
 h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tight);
-  font-weight:700;letter-spacing:-.005em;flex:none;
+  font-weight:700;letter-spacing:-.005em;color:var(--accent);flex:none;
   margin-bottom:var(--gap-frame)}                               /* ② 主标题 */
 .lead{font-size:var(--fs-lead);line-height:var(--lh-body);color:var(--ink2);
   flex:none;margin-bottom:var(--gap-frame);max-width:calc(var(--u) * 44)}  /* ③ 导语 */
@@ -292,8 +296,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 标准页 ＋ 编号条目表 ═══════════════ -->
 <section class="slide" data-notes="条目表：u=25px 时正文区放得下 4 行（含英文小注）。">
-  <div class="head"><span class="kicker">01 · 小节名</span><span class="hline"></span></div>
-  <h1>English headline</h1>
+  <div class="ttl"><span class="bar"></span><h1>English headline</h1></div>
   <p class="lead">导语一句话。字号 30px，颜色 --ink2。</p>
   <div class="body">
     <div class="rows">
@@ -308,8 +311,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 标准页 ＋ 三条论点 ═══════════════ -->
 <section class="slide" data-notes="最常用的原型。四条是上限，超过就拆页。">
-  <div class="head"><span class="kicker">02 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: arguments</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: arguments</h1></div>
   <p class="lead">纯文字的正文，四条以内。超了拆页，不要缩字号。</p>
   <div class="body">
     <div class="args">
@@ -325,8 +327,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 标准页 ＋ 两栏对照 ═══════════════ -->
 <section class="slide" data-notes="两栏对照。加了 .acc 的一栏是强调栏。">
-  <div class="head"><span class="kicker">03 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: two columns</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: two columns</h1></div>
   <p class="lead">用于正反对比。加 <b>.acc</b> 的一栏标签变红、内容加粗。</p>
   <div class="body">
     <div class="pair">
@@ -346,8 +347,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 标准页 ＋ 循环图 ═══════════════ -->
 <section class="slide" data-notes="只在需要表达「会回到起点」时用。">
-  <div class="head"><span class="kicker">04 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: the loop</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: the loop</h1></div>
   <p class="lead">只在需要表达「会回到起点」时用。单向前进的流程用条目表就够了。</p>
   <div class="body">
     <div class="loop">
@@ -368,8 +368,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 深色证据页 ═══════════════ -->
 <section class="slide dark" data-notes="深色页只有一个用途：装深色截图。加一个 class 即可，结构不动。">
-  <div class="head"><span class="kicker">05 · 小节名</span><span class="hline"></span></div>
-  <h1>Archetype: dark evidence</h1>
+  <div class="ttl"><span class="bar"></span><h1>Archetype: dark evidence</h1></div>
   <p class="lead">深色页只有一个用途：装深色截图。终端截图放白底上像贴了块黑胶布。</p>
   <div class="body" style="display:flex">
     <div class="shot">截图放这里 · 转 WebP 后 base64 内联，保持单文件</div>
@@ -380,8 +379,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══════════════ 原型 · 收尾 ═══════════════ -->
 <section class="slide end" data-notes="收尾：三句话，把整份 deck 收拢。">
-  <div class="head"><span class="kicker">小结</span><span class="hline"></span></div>
-  <h1>Closing headline</h1>
+  <div class="ttl"><span class="bar"></span><h1>Closing headline</h1></div>
   <div class="body">
     <div class="args">
       <div class="arg"><span class="an">01</span><span class="at">第一句结论。</span></div>
@@ -393,8 +391,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 </section>
 
 <section class="slide">
-  <div class="head"><span class="kicker">TEST</span><span class="hline"></span></div>
-  <h1>Two tall columns</h1>
+  <div class="ttl"><span class="bar"></span><h1>Two tall columns</h1></div>
   <div class="body" style="display:flex;gap:24px">
     <div style="width:520px"><p style="font-size:25px;line-height:1.6">横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。横排左列超量文字。</p></div>
     <div style="width:520px"><p style="font-size:25px;line-height:1.6">横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。横排右列超量文字。</p></div>

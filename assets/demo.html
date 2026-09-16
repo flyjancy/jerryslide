@@ -29,7 +29,7 @@
   --fs-key:    calc(var(--u) * 1.20);    /* n=+1   30px  条目表关键词     */
   --fs-body:   var(--u);                 /* n= 0   25px  正文 —— 下限     */
   --fs-note:   calc(var(--u) * 0.83);    /* n=-1   21px  注解 / 代价说明  */
-  --fs-kicker: calc(var(--u) * 0.69);    /* n=-2   17px  小节标签         */
+  --fs-kicker: calc(var(--u) * 0.69);    /* n=-2   17px  编号/小注/页码   */
   --fs-foot:   calc(var(--u) * 0.58);    /* n=-3   14px  页脚 / 页码      */
 
   /* ── 行高 ──────────────────────────────────────────────────────────── */
@@ -112,16 +112,20 @@ b,strong{font-weight:600}
   --accent:var(--accent-d); --accent-bg:var(--accent-bg-d)}
 
 /* ════════════════════════════════════════════════════════════════════════
-   §4 页面骨架 —— 六个固定锚点，只有 ④ 伸缩
+   §4 页面骨架 —— 五个固定锚点，只有 ④ 伸缩
    ════════════════════════════════════════════════════════════════════════ */
-.head{display:flex;align-items:center;gap:var(--gap-tight);
-  flex:none;margin-bottom:calc(var(--u) * 1.5)}                 /* ① 页眉   */
-.kicker{font-size:var(--fs-kicker);letter-spacing:.20em;color:var(--accent);
-  font-weight:600;white-space:nowrap;text-transform:uppercase}
-.hline{flex:1;height:2px;background:#b8b8b8}
+/* ① 标题行：红竖块 ＋ 红标题。
+   删掉页眉（kicker ＋ 2px 线）不只消掉「红字与黑大字谁是标题」的歧义，
+   还每页让出 65px（页眉行 23px ＋ 下间距 1.5u＝42px）——
+   比落点句多一行（60px）还多。红竖块是「面」，比那条 2px 线抗压（铁律 1）。 */
+.ttl{display:flex;align-items:center;gap:calc(var(--u) * 0.8);
+  flex:none;margin-bottom:var(--gap-frame)}
+.ttl .bar{flex:none;width:calc(var(--u) * 0.64);height:calc(var(--u) * 2.4);
+  background:var(--accent)}
+.ttl h1{margin-bottom:0}
 
 h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tight);
-  font-weight:700;letter-spacing:-.005em;flex:none;
+  font-weight:700;letter-spacing:-.005em;color:var(--accent);flex:none;
   margin-bottom:var(--gap-frame)}                               /* ② 主标题 */
 .lead{font-size:var(--fs-lead);line-height:var(--lh-body);color:var(--ink2);
   flex:none;margin-bottom:var(--gap-frame);max-width:calc(var(--u) * 44)}  /* ③ 导语 */
@@ -344,8 +348,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 2 · 目录 ═══ -->
 <section class="slide" data-notes="目录：每份 deck 必有。条目 ≤5 行；section 更多就按主题归组（实测 6 行余量只剩 4.4px，见 RULES.md 复合零件表）。">
-  <div class="head"><span class="kicker">目录</span><span class="hline"></span></div>
-  <h1>What's in here</h1>
+  <div class="ttl"><span class="bar"></span><h1>What's in here</h1></div>
   <div class="body">
     <div class="toc" style="margin-top:calc(var(--u)*0.5)">
       <div class="ti"><span class="tn">01</span><span class="tt">前提变了</span><span class="td">屏幕共享不是投影仪</span></div>
@@ -367,8 +370,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 2 · 三条论点 ═══ -->
 <section class="slide" data-notes="最常用的原型。三条是舒服的量，第五条开始要加 .tight。">
-  <div class="head"><span class="kicker">01 · 前提变了</span><span class="hline"></span></div>
-  <h1>Screen sharing is not a projector</h1>
+  <div class="ttl"><span class="bar"></span><h1>Screen sharing is not a projector</h1></div>
   <div class="body">
     <div class="args">
       <div class="arg"><span class="an">01</span><span class="at">观众在 <b>0.6 米</b>外，看的是他自己窗口里的画面 —— 大小不由你决定。</span></div>
@@ -390,8 +392,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 7 · 条目表 ═══ -->
 <section class="slide" data-notes="条目表。u=28px 且不用线时，正文区放得下 5 行。">
-  <div class="head"><span class="kicker">03 · 四条硬规则</span><span class="hline"></span></div>
-  <h1>What actually holds up</h1>  <div class="body">
+  <div class="ttl"><span class="bar"></span><h1>What actually holds up</h1></div>  <div class="body">
     <div class="rows">
       <div class="row"><span class="n">01</span><span class="k">正文字号<small>TYPE SIZE</small></span><span class="v">≥ 25px，由「要支持到多窄的窗口」反推，不是拍脑袋</span></div>
       <div class="row hi"><span class="n">02</span><span class="k">分隔线宽<small>RULE WIDTH</small></span><span class="v">≥ 2px；1px 的线编码后只剩 4% 对比度</span></div>
@@ -404,8 +405,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 4 · 两栏对照 ═══ -->
 <section class="slide" data-notes="两栏对照。加 .acc 的一栏是强调栏。">
-  <div class="head"><span class="kicker">02 · 两个场景</span><span class="hline"></span></div>
-  <h1>Projector vs. screen share</h1>
+  <div class="ttl"><span class="bar"></span><h1>Projector vs. screen share</h1></div>
   <p class="lead">同样是"给人看幻灯片"，约束却几乎完全相反。</p>
   <div class="body">
     <div class="pair">
@@ -430,8 +430,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 5 · 循环 ═══ -->
 <section class="slide" data-notes="只在需要表达「会回到起点」时用。">
-  <div class="head"><span class="kicker">04 · 怎么用</span><span class="hline"></span></div>
-  <h1>The only workflow that works</h1>
+  <div class="ttl"><span class="bar"></span><h1>The only workflow that works</h1></div>
   <p class="lead">写完就发，一定会有一页在会议室里崩掉。要有一个闭环。</p>
   <div class="body">
     <div class="loop">
@@ -450,8 +449,7 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 <!-- ═══ 6 · 收尾 ═══ -->
 <section class="slide end" data-notes="收尾：三句话，把整份 deck 收拢。">
-  <div class="head"><span class="kicker">收尾</span><span class="hline"></span></div>
-  <h1>Three things to remember</h1>
+  <div class="ttl"><span class="bar"></span><h1>Three things to remember</h1></div>
   <div class="body">
     <div class="args">
       <div class="arg"><span class="an">01</span><span class="at">屏幕共享的约束是<b>窗口大小</b>，不是会议室有多大。</span></div>
