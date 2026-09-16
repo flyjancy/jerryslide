@@ -70,14 +70,16 @@ CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PY="$HOME/.cache/slide-venv/bin/python"
 ```
 
-### ① 起手：复制模板
+### ① 起手：newdeck.py
 
 ```bash
-cp "$ASSETS/template.html" my-deck.html
+"$SCRIPTS/newdeck.py" my-deck.html "这份 deck 的全名"
 ```
 
 **不要从空白文件写。** 令牌、六锚点骨架、打印规则、UI 隐藏规则全在模板里。
 从空白写必然漏掉其中几条，而且漏掉的都是**看不出来**的那几条（见 `references/FAILURES.md`）。
+用 `newdeck.py` 而不是 `cp`：它顺手把 `<title>` 设好（F8b），
+并自检模板没被改坏 —— 面板残留、结构回退都会被拦下。
 
 ### ② 写页：用 `setpages.py`，别直接改大文件
 
@@ -127,6 +129,9 @@ $PY "$SCRIPTS/build_font.py" my-deck.html --latin arimo # 想换窄拉丁时才�
 ```
 
 **幂等**，可以无脑重跑。**不跑就会静默掉字**（见 `references/FAILURES.md` F4）。
+
+**`--latin calibri` 会把 Microsoft 授权字体嵌进 deck** —— 仅限有 Office 授权的
+内部用途；对外分发用 `arimo`（OFL）或默认 `noto`。
 
 ### ④ 验收
 
@@ -241,5 +246,6 @@ PDF 检查
 | `scripts/check.py` | 机械验收（静态 + 字形覆盖 + 几何 + PDF） |
 | `scripts/build_font.py` | 字体子集化 + 内联（幂等） |
 | `assets/tests/` | 反向用例 |
+| `scripts/newdeck.py` | 从模板起手（设 title + 自检模板干净） |
 | `scripts/setpages.py` | 页面抽出／贴回（边界以外一字节不动） |
 | `scripts/parts.py` | 零件清单（定义 × 示范 × 文档），从 CSS 生成 |

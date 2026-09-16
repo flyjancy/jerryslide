@@ -119,8 +119,9 @@ b,strong{font-weight:600}
 
 .slide.dark{
   --paper:var(--paper-d); --ink:var(--ink-d); --ink2:var(--ink2-d);
-  --muted:var(--muted-d); --line:var(--line-d);
-  --accent:var(--accent-d); --accent-bg:var(--accent-bg-d)}
+  --muted:var(--muted-d); --line:0px solid var(--line-d);
+  --accent:var(--accent-d); --accent-bg:var(--accent-bg-d);
+  --face:var(--face-d); --face-2:var(--face-2-d); --face-3:var(--face-3-d)}
 
 /* ════════════════════════════════════════════════════════════════════════
    §4 页面骨架 —— 六个固定锚点，只有 ④ 伸缩
@@ -130,6 +131,8 @@ b,strong{font-weight:600}
 .kicker{font-size:var(--fs-kicker);letter-spacing:.20em;color:var(--accent);
   font-weight:600;white-space:nowrap;text-transform:uppercase}
 .hline{flex:1;height:2px;background:#b8b8b8}
+/* 深色页页眉线：调参层删掉后由这里接管（原 demo 层 --sep-cd 的值） */
+.slide.dark .hline{background:#4a515c}
 
 h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tight);
   font-weight:700;letter-spacing:-.005em;flex:none;
@@ -267,12 +270,6 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 .end .args .arg:first-child{border-top:var(--line)}
 .end .args .arg .at{font-size:var(--fs-lead);color:var(--ink)}
 
-/* ── 截图位（深色页用）───────────────────────────────────────────────── */
-.shot{border:var(--line);display:flex;align-items:center;
-  justify-content:center;color:var(--muted);font-size:var(--fs-kicker);
-  letter-spacing:.04em;flex:1;overflow:hidden}
-.shot img{width:100%;height:100%;object-fit:contain;display:block}
-
 /* ════════════════════════════════════════════════════════════════════════
    备注 / 帮助 / 进度条
    ════════════════════════════════════════════════════════════════════════ */
@@ -376,17 +373,6 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
   display:block;overflow:hidden;flex:none}
 .shot img{display:block;width:100%;height:auto}
 
-/* ══ DEMO 调参层：把分隔线拆成可切换的令牌 ══════════════════════════════
-   生产模板里 --line 是死值；demo 里让它由 --sep-w / --sep-c 组合，
-   面板改这两个数就能当场看四种方案。                                  */
-:root{ --sep-w:0px; --sep-c:#b8b8b8; --sep-cd:#4a515c; }
-.slide.dark{ --sep-c:var(--sep-cd);
-  /* 面令牌的深色对偶：只换令牌，页面结构一个字不动 */
-  --face:var(--face-d); --face-2:var(--face-2-d); --face-3:var(--face-3-d); }
-:root{ --line: var(--sep-w) solid var(--sep-c); }
-.slide.dark{ --line: var(--sep-w) solid var(--sep-cd); }
-.hline{ height:2px; background:var(--sep-c) }   /* 页眉线是结构性的，恒 2px */
-
 /* ══ 原型 · 目录 ══════════════════════════════════════════════════════
    不用线，所以分界完全靠行距和红色编号，行距给得比 .rows 大。      */
 .toc{display:flex;flex-direction:column;gap:calc(var(--u)*0.86)}
@@ -406,30 +392,6 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 .sect h1{font-size:calc(var(--u)*1.72);margin-bottom:calc(var(--u)*0.5)}
 .sect .sub{font-size:var(--fs-lead);color:var(--ink2);line-height:1.55;
   max-width:calc(var(--u)*30)}
-
-/* ══ 调参面板（屏幕像素，不进 1280×720 舞台，不受 u 控制）═════════════ */
-#panel{position:fixed;left:18px;bottom:18px;z-index:90;display:none;
-  background:#fff;border:2px solid #b8b8b8;border-radius:10px;padding:16px 18px;
-  font:13px/1.7 "PingFang SC","Helvetica Neue",Arial,sans-serif;color:#101010;
-  width:300px}
-#panel.on{display:block}
-#panel h4{margin:0 0 4px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-  color:#a70e13;font-weight:600}
-#panel .grp{margin:0 0 14px}
-#panel .grp:last-child{margin-bottom:0}
-#panel .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-#panel button{font:inherit;font-size:12px;padding:4px 10px;cursor:pointer;
-  background:#fff;color:#454545;border:1px solid #c4c4c4;border-radius:5px}
-#panel button:hover{border-color:#a70e13;color:#a70e13}
-#panel button.sel{background:#a70e13;color:#fff;border-color:#a70e13;font-weight:600}
-#panel .hint{color:#767676;font-size:11.5px;margin-top:6px}
-#pbtn{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:91;
-  writing-mode:vertical-rl;font:600 11px/1 "PingFang SC",sans-serif;
-  letter-spacing:.14em;padding:14px 7px;cursor:pointer;
-  background:#fff;color:#a70e13;border:2px solid #a70e13;border-left:none;
-  border-radius:0 8px 8px 0}
-#pbtn:hover{background:#a70e13;color:#fff}
-#pbtn.hide{display:none}
 
 </style>
 </head>
@@ -610,42 +572,11 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 </section>
 </div><!-- /#stage -->
 
-<div id="pbtn">⚙ 调参 D</div>
-<div id="panel">
-  <div class="grp">
-    <h4>分隔线</h4>
-    <div class="opts" id="opt-sep">
-      <button data-w="2px" data-c="#b8b8b8">2px #b8b8b8</button>
-      <button data-w="2px" data-c="#c4c4c4">2px #c4c4c4</button>
-      <button data-w="1px" data-c="#d0d0d0">1px #d0d0d0（旧）</button>
-      <button data-w="0px" data-c="#b8b8b8">不用线</button>
-    </div>
-    <div class="hint" id="hint-sep"></div>
-  </div>
-  <div class="grp">
-    <h4>基准单位 u</h4>
-    <div class="opts" id="opt-u">
-      <button data-u="22">22px</button>
-      <button data-u="25">25px</button>
-      <button data-u="28">28px</button>
-    </div>
-    <div class="hint">u 同时是正文字号、字号基准、所有间距的倍数</div>
-  </div>
-  <div class="grp">
-    <h4>当前页深浅</h4>
-    <div class="opts" id="opt-dark">
-      <button data-dark="0">浅色</button>
-      <button data-dark="1">深色</button>
-    </div>
-    <div class="hint">只换令牌，页面结构不动</div>
-  </div>
-</div>
-
 <div id="notes"></div>
 <div id="help"><div class="box">
   <div><kbd>→</kbd><kbd>空格</kbd><kbd>Enter</kbd><kbd>点击</kbd> 下一页</div>
   <div><kbd>←</kbd> 上一页 &nbsp;·&nbsp; <kbd>Home</kbd> / <kbd>End</kbd> 首尾</div>
-  <div><kbd>d</kbd> 调参面板 &nbsp;·&nbsp; <kbd>f</kbd> 全屏 &nbsp;·&nbsp; <kbd>s</kbd> 备注</div>
+  <div><kbd>f</kbd> 全屏 &nbsp;·&nbsp; <kbd>s</kbd> 备注 &nbsp;·&nbsp; <kbd>p</kbd> 导出 PDF</div>
   <div><kbd>?</kbd> 显示这份帮助 &nbsp;·&nbsp; <kbd>Esc</kbd> 关闭</div>
 </div></div>
 <script>
@@ -670,8 +601,7 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
   document.addEventListener('keydown',function(e){
     var k=e.key;
     if(k==='?'||(k==='/'&&e.shiftKey)){ help.classList.toggle('on'); e.preventDefault(); return; }
-    if(k==='Escape'){ help.classList.remove('on'); document.getElementById('panel').classList.remove('on'); document.getElementById('pbtn').classList.remove('hide'); return; }
-    if(k==='d'||k==='D'){ togglePanel(); e.preventDefault(); return; }
+    if(k==='Escape'){ help.classList.remove('on'); return; }
     if(help.classList.contains('on')) return;
     if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'||k==='ArrowDown'){ goto(i+1); e.preventDefault(); }
     else if(k==='ArrowLeft'||k==='PageUp'||k==='ArrowUp'){ goto(i-1); e.preventDefault(); }
@@ -682,67 +612,10 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
     else if(k==='p'||k==='P'){ window.print(); }
   });
   document.addEventListener('click',function(e){
-    if(e.target.closest('#panel')||e.target.closest('#pbtn')) return;
     if(help.classList.contains('on')){ help.classList.remove('on'); return; }
     if(e.target.closest('#notes')) return;
     goto(i+1);
   });
-
-  /* ── 调参面板 ───────────────────────────────────────────── */
-  var panel=document.getElementById('panel'), pbtn=document.getElementById('pbtn');
-  function togglePanel(){
-    panel.classList.toggle('on');
-    pbtn.classList.toggle('hide', panel.classList.contains('on'));
-  }
-  pbtn.addEventListener('click', togglePanel);
-
-  var HINT={'2px #b8b8b8':'编码后 22.0% · 存活余量 2.75× —— 最稳，但看着像表格线',
-            '2px #c4c4c4':'编码后 12.6% · 余量只有 1.6× —— 更好看，风险更高',
-            '1px #d0d0d0（旧）':'编码后 0.8% · 存活率 4% —— 会上基本看不见（改成 960 宽看）',
-            '不用线':'零风险，但条目分界完全靠行距和编号承担'};
-  var sepBtns=document.querySelectorAll('#opt-sep button');
-  sepBtns.forEach(function(b){
-    b.addEventListener('click',function(){
-      var w=b.dataset.w, c=b.dataset.c;
-      document.documentElement.style.setProperty('--sep-w',w);
-      document.documentElement.style.setProperty('--sep-c',c);
-      document.documentElement.style.setProperty('--sep-cd', c==='#c4c4c4'?'#3f4650':'#4a515c');
-      sepBtns.forEach(function(x){ x.classList.toggle('sel', x===b); });
-      document.getElementById('hint-sep').textContent = HINT[b.textContent]||'';
-    });
-  });
-  var uBtns=document.querySelectorAll('#opt-u button');
-  uBtns.forEach(function(b){
-    b.addEventListener('click',function(){
-      document.documentElement.style.setProperty('--u', b.dataset.u+'px');
-      uBtns.forEach(function(x){ x.classList.toggle('sel', x===b); });
-    });
-  });
-
-  /* 初始化：从样式表读初值，而不是写死。
-     写死的话 check.py 量到的是 JS 的值，不是 HTML 里真正写了什么。 */
-  function sel(btns, match){
-    btns.forEach(function(x){ x.classList.toggle('sel', match(x)); });
-  }
-  var rs = getComputedStyle(document.documentElement);
-  var u0 = Math.round(parseFloat(rs.getPropertyValue('--u')));
-  sel(uBtns, function(x){ return parseInt(x.dataset.u,10)===u0; });
-  var w0 = rs.getPropertyValue('--sep-w').trim(), c0 = rs.getPropertyValue('--sep-c').trim();
-  sel(sepBtns, function(x){ return x.dataset.w===w0 && x.dataset.c===c0; });
-  var cur = Array.prototype.filter.call(sepBtns, function(x){ return x.classList.contains('sel'); })[0];
-  document.getElementById('hint-sep').textContent = cur ? (HINT[cur.textContent]||'') : '';
-
-  var dBtns=document.querySelectorAll('#opt-dark button');
-  dBtns.forEach(function(b){
-    b.addEventListener('click',function(){
-      S[i].classList.toggle('dark', b.dataset.dark==='1');
-      dBtns.forEach(function(x){ x.classList.toggle('sel', x===b); });
-    });
-  });
-  var _apply=apply; apply=function(){ _apply();
-    var d=S[i].classList.contains('dark')?'1':'0';
-    dBtns.forEach(function(x){ x.classList.toggle('sel', x.dataset.dark===d); });
-  };
 
   window.addEventListener('resize',fit);
   var h=parseInt((location.hash||'').replace('#',''),10);

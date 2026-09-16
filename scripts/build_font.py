@@ -26,6 +26,7 @@
 
 import argparse
 import base64
+import html
 import os
 import re
 import subprocess
@@ -141,13 +142,17 @@ def latin_sources(choice):
 
 
 def deck_chars(path):
-    """取出 deck 里所有可见文字。不含 <style> / <script>。"""
+    """取出 deck 里所有可见文字。不含 <style> / <script>。
+
+    解码 HTML 实体：`&#x2500;` 渲染出的字符和字面 UTF-8 字符一样
+    必须进子集 —— 不解码的话缺字是静默的（check.py 同样修了这一处）。
+    """
     h = Path(path).read_text(encoding="utf-8")
     h = re.sub(r"<style[^>]*>.*?</style>", " ", h, flags=re.S)
     h = re.sub(r"<script[^>]*>.*?</script>", " ", h, flags=re.S)
     h = re.sub(r"<!--.*?-->", " ", h, flags=re.S)
     h = re.sub(r"<[^>]+>", " ", h)
-    h = h.replace("&nbsp;", " ").replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+    h = html.unescape(h)
     return set(h) | set(ALWAYS)
 
 

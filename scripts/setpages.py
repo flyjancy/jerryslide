@@ -240,6 +240,8 @@ def main() -> int:
                     help="抽出页面到页面文件（不指定 pages 时用默认名）")
     ap.add_argument("--list", "-l", action="store_true", help="只列页面清单")
     ap.add_argument("--check", action="store_true", help="只体检，不写")
+    ap.add_argument("--force", "-f", action="store_true",
+                    help="--extract 时：pages 文件里有未贴回的改动也照样覆盖（放弃那些改动）")
     ap.add_argument("--self-test", action="store_true", help="跑反向用例")
     ap.add_argument("--title", metavar="TEXT",
                     help="改外壳里的 <title>（唯一会碰外壳内容的地方，只换这一个标签）")
@@ -276,10 +278,16 @@ def main() -> int:
 
         # ── --extract ────────────────────────────────────────────
         if args.extract:
-            if pages_path.exists():
-                print(f"  ⚠️ {pages_path} 已存在，会被覆盖"
-                      f"（里面没贴回去的改动会丢）", file=sys.stderr)
             raw = h[a:b]                    # 原样，含两端空白
+            if pages_path.exists():
+                old = pages_path.read_text(encoding="utf-8")
+                if old != raw and not args.force:
+                    # 和当前页面区一致 = 早已贴回，覆盖无损失；
+                    # 不一致 = 里面有没贴回去的改动，覆盖就丢了。
+                    print(f"✗ {pages_path} 里有没贴回去的改动，不覆盖。", file=sys.stderr)
+                    print(f"    先贴回去（{_self()} {deck}），或确认放弃后加 --force。",
+                          file=sys.stderr)
+                    return 1
             pages_path.write_text(raw, encoding="utf-8")
             # 贴回去必须与原文逐字节相同 —— 这是本工具的硬保证
             if splice(h, raw) != h:

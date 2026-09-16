@@ -42,11 +42,16 @@ import sys
 import tempfile
 import html as htmlmod
 
+# ⚠️ 和 build.sh 的 find_chrome 保持字面同步 —— 两边不一致时，
+# build.sh ② 能导出 PDF、③ 却在这里断掉（只有 google-chrome-stable /
+# chromium-browser 的 Linux 机器上真实会发生）。
 CHROME_CANDIDATES = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     shutil.which("google-chrome") or "",
+    shutil.which("google-chrome-stable") or "",
     shutil.which("chromium") or "",
+    shutil.which("chromium-browser") or "",
 ]
 
 MIN_SLACK_LINES = 1.92   # 导语多折一行的高度 = --fs-lead(1.2u) × --lh-body(1.6)。
@@ -149,8 +154,13 @@ def find_chrome():
 
 
 def strip_print_blocks(css):
-    """剥掉 @media print{...}，因为它们里面的 box-shadow:none 是修复不是违规。"""
-    out, i = [], 0
+    """剥掉 @media print{...}，返回 (剩余, 被剥掉的块)。
+
+    print 块里的 box-shadow:none 是修复不是违规。被剥掉的块要**原样返回**
+    —— 不能只回传剩余再让调用方按长度切片：print 块在文件中间时
+    切片会错位，handled 判断就不可靠了。
+    """
+    out, removed, i = [], [], 0
     while True:
         m = re.search(r"@media\s+print\s*\{", css[i:])
         if not m:
@@ -165,8 +175,9 @@ def strip_print_blocks(css):
             elif css[j] == "}":
                 depth -= 1
             j += 1
+        removed.append(css[i + m.start():j])
         i = j
-    return "".join(out)
+    return "".join(out), removed
 
 
 def static_checks(src, path=None):
@@ -184,8 +195,8 @@ def static_checks(src, path=None):
     block = re.search(r"<style>(.*?)</style>", src, re.S)
     css = re.sub(r"/\*.*?\*/", "", block.group(1), flags=re.S) if block else ""
     raw_css = block.group(1) if block else ""
-    screen_css = strip_print_blocks(css)
-    print_css = css[len(screen_css):] if css else ""
+    screen_css, print_blocks = strip_print_blocks(css)
+    print_css = "".join(print_blocks)
     # @media print 里把阴影关掉了 —— 那是对的做法，不是违规
     handled = {t: bool(re.search(re.escape(t) + r"\s*:\s*none", print_css)) for t, _ in FORBIDDEN}
 
@@ -347,6 +358,9 @@ def font_coverage_check(src):
     # UI 层（调参面板等）打印时不显示，缺字无所谓
     body = re.sub(r'<div id="(?:panel|pbtn|help|notes)".*?</div>\s*(?=<)', " ", body, flags=re.S)
     body = re.sub(r"<[^>]+>", " ", body)
+    # 数字实体（&#x2500;）渲染出的字符才是要查的 —— 不解码的话，
+    # 缺字会以 ASCII 实体文本的形态静默漏检（F4 的一个入口）。
+    body = htmlmod.unescape(body)
     used = {c for c in body if ord(c) > 0x20 and c not in "\n\t"}
     miss = sorted(c for c in used if ord(c) not in covered)
 
@@ -373,11 +387,19 @@ def pdf_check(path):
         return 1
     raw = open(path, "rb").read()
     n = 0
+    # /SMask 不一定来自 CSS：带 alpha 通道的位图也会产生合法 /SMask。
+    # PDF 里有位图时无法用字节扫描区分两者 —— 降级为警告并给出修法；
+    # 没有位图时 /SMask 只能来自阴影/渐变，仍判失败。
+    has_images = b"/Subtype /Image" in raw or b"/Subtype/Image" in raw
     for tok in (b"/SMask", b"/Luminosity"):
         c = raw.count(tok)
-        print(f"  {'✓' if c == 0 else '✗'} {tok.decode():12s} {c}"
-              + ("" if c == 0 else "   —— 软掩码，某些阅读器会渲染成灰块"))
-        n += (c > 0)
+        if tok == b"/SMask" and c and has_images:
+            print(f"  △ {tok.decode():12s} {c}   —— PDF 里有位图，无法区分软掩码和图片透明通道")
+            print(f"      若打印发灰：把截图压平成无 alpha 再嵌入")
+        else:
+            print(f"  {'✓' if c == 0 else '✗'} {tok.decode():12s} {c}"
+                  + ("" if c == 0 else "   —— 软掩码，某些阅读器会渲染成灰块"))
+            n += (c > 0)
 
     def tool(name, args):
         try:
@@ -422,9 +444,6 @@ def self_test():
                  if os.path.isdir(d)), None)
     if not tdir:
         print("✗ 找不到 assets/tests/ 目录（--self-test 要用）")
-        return 1
-    if not os.path.isdir(tdir):
-        print(f"✗ 找不到 {tdir}")
         return 1
     chrome = find_chrome()
     expect = {"bad_A.html": True, "bad_B.html": True, "bad_C.html": True,

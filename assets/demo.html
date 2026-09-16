@@ -19,7 +19,7 @@
 
   /* ── §2 基准单位 ──────────────────────────────────────────────────────
      u 由场地决定，不由审美决定：                                     */
-  --u: 28px;          /* = 22400 / Sv，Sv=900px 最窄显示宽度，见 §2      */
+  --u: 28px;          /* = 22400 / Sv，Sv=800px 最窄显示宽度；28 也是设计上限，见 §2 */
 
   /* ── §3 字号：等比数列，公比 1.2ⁿ，基准 u ──────────────────────────── */
   --fs-cover:  calc(var(--u) * 3.00);    /* n=+6   75px  封面主标题       */
@@ -237,12 +237,6 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 .end .args .arg{border-bottom:none;padding:calc(var(--u)*0.76) 0}
 .end .args .arg:first-child{border-top:var(--line)}
 .end .args .arg .at{font-size:var(--fs-lead);color:var(--ink)}
-
-/* ── 截图位（深色页用）───────────────────────────────────────────────── */
-.shot{border:var(--line);display:flex;align-items:center;
-  justify-content:center;color:var(--muted);font-size:var(--fs-kicker);
-  letter-spacing:.04em;flex:1;overflow:hidden}
-.shot img{width:100%;height:100%;object-fit:contain;display:block}
 
 /* ════════════════════════════════════════════════════════════════════════
    备注 / 帮助 / 进度条

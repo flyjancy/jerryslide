@@ -4,14 +4,14 @@
     ./scripts/newdeck.py out.html ["deck 的 <title>"]
     ./scripts/newdeck.py --help
 
-复制 template.html 并剥掉开发用的调参面板。
+复制 template.html 并把 <title> 设好。
 
 **第二个参数是 deck 的 `<title>`**，不给就用文件名去掉扩展名。
 `<title>` 住在外壳里（`#stage` 之外），起手就设好就不用回头去碰外壳 ——
 冷启动测试里三个 agent 用三种不同办法去改它，其中一次忘了改。
 
-为什么要有这个脚本
-──────────────────
+为什么模板里不再有调参面板
+──────────────────────────
 模板自带一个「调参面板」（切分隔线 / u / 深浅），那是开发时看效果用的，
 生产 deck 里必须剥掉。**而剥错是有代价的** —— 真实踩过：
 
@@ -21,7 +21,10 @@
     **整个 IIFE 当场死掉** —— fit() 不跑、页码不填、深链接失效。
     而这一切看起来只像「样式没加载」。
 
-所以这里按**结构边界**删，不靠非贪婪正则猜。删完还会自检残留引用。
+上面就是当时删面板踩的坑。所以现在面板从 template.html 里**整个移走了**
+（demo.html 保留自己的那份，面板在那里继续有用），模板就是生产外壳。
+本脚本不再删任何东西 —— 只剩两件事：设 title、**自检模板没有面板残留**，
+防止将来改模板时把它意外带回来。
 
 接下来
 ──────
@@ -63,61 +66,27 @@ def find_asset(name: str) -> pathlib.Path:
 
 TPL = None   # 由 find_asset 在运行时定位（见下）
 
-# 面板在文档里的边界：整段落在 </div><!-- /#stage --> 和 <div id="notes"> 之间。
-# 按边界删而不是按标签匹配 —— 面板内部有多层嵌套 div，正则数不清楚。
-MARK_A = "</div><!-- /#stage -->"
-MARK_B = '<div id="notes">'
-
-# 样式表里的面板块
-CSS_RE = re.compile(r"\n/\* ══ 调参面板.*?#pbtn\.hide\{display:none\}\n", re.S)
-# 脚本里的面板块
-JS_RE = re.compile(r"\n  /\* ── 调参面板.*?(?=\n  window\.addEventListener\('resize',fit\);)", re.S)
-# 逻辑里对面板元素的引用
-REF_SUBS = [
-    ("document.getElementById('panel').classList.remove('on'); "
-     "document.getElementById('pbtn').classList.remove('hide'); ", ""),
-    ("    if(k==='d'||k==='D'){ togglePanel(); e.preventDefault(); return; }\n", ""),
-    ("    if(e.target.closest('#panel')||e.target.closest('#pbtn')) return;\n", ""),
-    ("<div><kbd>d</kbd> 调参面板 &nbsp;·&nbsp; <kbd>f</kbd> 全屏 &nbsp;·&nbsp; <kbd>s</kbd> 备注</div>",
-     "<div><kbd>f</kbd> 全屏 &nbsp;·&nbsp; <kbd>s</kbd> 备注 &nbsp;·&nbsp; <kbd>p</kbd> 导出 PDF</div>"),
-]
-
+# 模板不该再含任何「开发面板」的痕迹 —— 出现就是模板回退了。
+# 面板现在只住在 demo.html 里；生产模板必须是干净外壳。
+FORBIDDEN = ('id="panel"', 'id="pbtn"', 'togglePanel', '#panel{', '#pbtn{',
+             '--sep-w', 'class="grp"', 'opt-u', 'opt-dark', 'opt-sep',
+             'hint-sep', '<kbd>d</kbd>')
 
 TITLE_RE = re.compile(r"<title>.*?</title>", re.S)
 
 
-def strip_dev(h: str) -> str:
-    # ① 面板 HTML：按结构边界整段切掉
-    a = h.index(MARK_A) + len(MARK_A)
-    b = h.index(MARK_B)
-    if "class=\"grp\"" not in h[a:b] and "opt-u" not in h[a:b]:
-        raise SystemExit("✗ 面板 HTML 的边界对不上，template.html 结构变过了")
-    h = h[:a] + "\n\n" + h[b:]
+def verify_clean(h: str) -> None:
+    """模板必须是生产外壳，发现开发面板的痕迹就拒绝起 deck。
 
-    # ② 面板样式
-    h, n_css = CSS_RE.subn("\n", h, count=1)
-    if n_css != 1:
-        raise SystemExit("✗ 没找到面板样式块")
-
-    # ③ 面板脚本
-    h, n_js = JS_RE.subn("\n", h, count=1)
-    if n_js != 1:
-        raise SystemExit("✗ 没找到面板脚本块")
-
-    # ④ 其余引用
-    for a2, b2 in REF_SUBS:
-        if a2 not in h:
-            raise SystemExit(f"✗ 引用没找到（模板改过了？）：{a2[:60]!r}")
-        h = h.replace(a2, b2, 1)
-
-    # ⑤ 自检
-    left = [k for k in ("id=\"panel\"", "id=\"pbtn\"", "togglePanel", "opt-sep",
-                        "opt-u", "opt-dark", "hint-sep", "class=\"grp\"",
-                        "#panel{", "#pbtn{") if k in h]
+    这不是历史上的洁癖：面板的把手常驻屏幕左侧，屏幕共享时观众看得见
+    （@media print 只救得了 PDF，救不了共享画面）。
+    """
+    left = [k for k in FORBIDDEN if k in h]
     if left:
-        raise SystemExit(f"✗ 剥完还有残留：{left}")
-
-    return h
+        raise SystemExit(
+            f"✗ template.html 里出现了开发面板的痕迹：{left}\n"
+            f"  生产模板不该有调参面板（demo.html 才有）。"
+            f"先把它移干净再起 deck。")
 
 
 def main():
@@ -139,7 +108,7 @@ def main():
     title = sys.argv[2] if len(sys.argv) == 3 else out.stem
 
     h = find_asset("template.html").read_text(encoding="utf-8")
-    h = strip_dev(h)
+    verify_clean(h)
     h = TITLE_RE.sub(lambda m: "<title>" + title.replace("&", "&amp;")
                      .replace("<", "&lt;").replace(">", "&gt;") + "</title>", h, count=1)
 
