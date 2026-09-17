@@ -160,6 +160,7 @@ window.onerror = function(m, s, l){
       it.h1lines = Math.max(1, Math.round(hh / lh));
       it.h1br = /<br\s*\/?>/i.test(h1.innerHTML);
       it.cover = s.classList.contains('cover');
+      it.chapter = s.classList.contains('chapter');
     } else {
       it.h1lines = 0;
     }
@@ -328,6 +329,46 @@ def static_checks(src, path=None):
         else:
             print("  ✓ 每页都有 h1")
 
+        # 章节页（.chapter，满高红竖带）—— 与目录的对账。
+        # 章节页是**导航件**：编号错一位比没有更糟，观众会以为跳到了别章。
+        # 所以编号必须在目录里存在，而且中文那行与目录同一条**逐字相同**
+        # （同一概念全 deck 一种写法，RULES §7）。
+        # 允许只给部分章节做分隔页（比如只做转折处）—— 那是子集，也要求递增。
+        def cls_of(s):
+            m = re.match(r'<section class="([^"]*)"', s)
+            return m.group(1) if m else ""
+        chapters = [s for s in secs if "chapter" in cls_of(s).split()]
+        if chapters:
+            toc = {}
+            for ti in re.findall(r'<div class="ti">(.*?)</div>', src, re.S):
+                tn = re.search(r'<span class="tn">\s*(\d+)\s*</span>', ti)
+                td = re.search(r'<span class="td">(.*?)</span>', ti, re.S)
+                if tn:
+                    toc[tn.group(1)] = re.sub(r'\s+', " ", td.group(1)).strip() if td else ""
+            nums, errs = [], []
+            for k, s in enumerate(chapters, 1):
+                mnum = re.search(r'<span class="cnum">\s*(\d+)\s*</span>', s)
+                msub = re.search(r'<p class="sub">(.*?)</p>', s, re.S)
+                num = mnum.group(1) if mnum else ""
+                sub = re.sub(r'\s+', " ", msub.group(1)).strip() if msub else ""
+                nums.append(num)
+                if not num:
+                    errs.append(f"第 {k} 张章节页没有 <span class=\"cnum\"> 编号")
+                elif toc and num not in toc:
+                    errs.append(f"章节页编号 {num} 在目录里没有——对不上读者看到的目录")
+                elif toc and sub != toc[num]:
+                    errs.append(f"章节页 {num} 的中文行与目录不一致：\n"
+                                f"          章节页：{sub}\n          目录里：{toc[num]}")
+            if nums != sorted(nums):
+                errs.append(f"章节页编号不是递增：{nums} —— 顺序错了读者会迷路")
+            if errs:
+                print(f"  ✗ 章节页与目录对不上（{len(errs)} 处）")
+                for e in errs:
+                    print(f"      —— {e}")
+                n += 1
+            else:
+                print(f"  ✓ 章节页 {len(chapters)} 张，编号与目录逐字对齐：{nums}")
+
         # 已废弃的零件：页眉（.head / .kicker / .hline）2026-09-17 被标题行 .ttl 取代。
         # 老模板里它们长得像「标题」，混回来就又变成一页两个标题。
         # 最后一页必须是收尾页（.end ＋ 正中 .qa）。讲完停在屏幕上的是它 ——
@@ -424,6 +465,10 @@ def overflow_check(chrome, path):
             bad += 1
         elif s["fills"] and slack < 1:
             note = "✓ 弹性元素填满"
+        elif s.get("chapter"):
+            # 章节分隔页天生只有编号 + 标题 + 一句中文 —— 「内容少」是它的设计，
+            # 不是缺陷。它的价值在**位置与编号**，不在信息量。
+            note = "✓ 章节页（内容量不判）"
         elif min_slack is not None and slack < min_slack:
             note = (f"△ 余量 {slack:.1f}px < {min_slack:.0f}px："
                     f"换台机器字体换行差一行就会溢出")
@@ -444,9 +489,10 @@ def overflow_check(chrome, path):
         print(f"  {s['p']:3d}  {s['body']:7.1f}  {content:9.1f}  {slack:+8.1f}   {dim}   {note}")
 
     # 标题行数：内容页必须一行。红竖块高 2.4u ＝ h1 一行，两行时竖块只够第一行，
-    # 而且白白吃掉一行标题的高度（67px）。封面例外。
+    # 而且白白吃掉一行标题的高度（67px）。封面与章节页例外：
+    # 封面是品牌标题（无竖块），章节页的标题在满高竖带右侧（也没有 .ttl 竖块）。
     multi = [s for s in data["slides"]
-             if s.get("h1lines", 0) >= 2 and not s.get("cover")]
+             if s.get("h1lines", 0) >= 2 and not s.get("cover") and not s.get("chapter")]
     brs = [s["p"] for s in multi if s.get("h1br")]
     if multi:
         pages = "、".join(str(s["p"]) for s in multi)
@@ -456,7 +502,7 @@ def overflow_check(chrome, path):
         print("      改成一行：删字，不要缩字号（铁律 5）。红竖块只对齐一行。")
         bad += 1
     else:
-        print("  ✓ 标题全部一行（封面除外）")
+        print("  ✓ 标题全部一行（封面与章节页除外）")
 
     bad += ink_check(data, src)
     print()
