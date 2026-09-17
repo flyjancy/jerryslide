@@ -116,12 +116,13 @@ window.onerror = function(m, s, l){
          渗进 76px 的页边距里还剩 57px）。
          只有真的顶到画面边缘、会被裁掉，才算错。 */
       var sr = s.getBoundingClientRect();
-      var worstV = 0, worstH = 0, deepest = 0;
+      var worstV = 0, worstH = 0, deepest = 0, shallowest = Infinity;
       function probe(r){
         if (!r.width && !r.height) return;
         worstV  = Math.max(worstV,  r.bottom - bb.bottom);
         worstH  = Math.max(worstH,  r.right  - sr.right);
         deepest = Math.max(deepest, r.bottom - bb.top);
+        shallowest = Math.min(shallowest, r.top - bb.top);
       }
       b.querySelectorAll('*').forEach(function(el){
         if (parseFloat(getComputedStyle(el).flexGrow) > 0) it.fills = true;
@@ -140,6 +141,11 @@ window.onerror = function(m, s, l){
       it.overH = +(worstH/sc).toFixed(1);
       it.over  = +(Math.max(worstV, worstH)/sc).toFixed(1);
       it.extent= +(deepest/sc).toFixed(1);
+      /* ⚠️ 正文区是垂直居中的（.body{justify-content:safe center}）：
+         「最深子项的底」不再等于**内容高度** —— 它含了居中偏移。
+         内容高 = 最深底 − 最浅顶。不减去最浅顶，余量会只算一半，
+         check 会静默变松（FAILURES F16 就是这一类：数字绿了，东西没变好）。 */
+      it.top = +(isFinite(shallowest) ? shallowest/sc : 0).toFixed(1);
     }
     /* 标题行数 —— 量出来的，不靠数 <br>。
        内容页标题必须一行（红竖块高 2.4u ＝ 一行；两行时竖块只够第一行，
@@ -403,13 +409,15 @@ def overflow_check(chrome, path):
         min_slack = None
         thr = "u 未定义 —— 余量仅列出，不判死（只拦硬溢出）"
     print("          " + thr + "）")
-    print("   页   正文区     内容伸到    余量      越界(纵/横)")
+    print("   页   正文区     内容高     余量      越界(纵/横)")
     bad = 0
     for s in data["slides"]:
         if not s["body"]:
             print(f"  {s['p']:3d}      —          —         —")
             continue
-        slack = s["body"] - s["extent"]
+        # 内容高 = 最深底 − 最浅顶（正文区居中，所以不能拿最深底当内容高）
+        content = s["extent"] - s.get("top", 0.0)
+        slack = s["body"] - content
         dim = f"{s['overV']:+7.1f} /{s['overH']:+7.1f}"
         if s["over"] > 0.5:
             note = "✗ 溢出"
@@ -426,11 +434,14 @@ def overflow_check(chrome, path):
             # 「太空」也是缺陷 —— 但它是判断题，所以只警告不判失败。
             # 45% 这条线来自实测：模板自己 11 页最高 42%，四份冷启动产物最高 40%，
             # 唯一视觉上明显半页空着的那页是 51%。见 FAILURES F9。
-            note = (f"⚠️  余量 {slack / s['body'] * 100:.0f}%（>45%）—— 半页空着："
-                    f"加点内容，或换原型")
+            # ⚠️ 补救办法是**加带信息的内容**（证据 / 代价）或换原型；
+            #    正文区已经垂直居中，居中只改善观感、不改变内容量 ——
+            #    更不要用灰字注解去垫（那就是把警告抹平，见 FAILURES F16）。
+            note = (f"⚠️  余量 {slack / s['body'] * 100:.0f}%（>45%）—— 内容偏少："
+                    f"加带信息的内容或换原型；**不要用灰字注解垫平**（F16）")
         else:
             note = "✓"
-        print(f"  {s['p']:3d}  {s['body']:7.1f}  {s['extent']:9.1f}  {slack:+8.1f}   {dim}   {note}")
+        print(f"  {s['p']:3d}  {s['body']:7.1f}  {content:9.1f}  {slack:+8.1f}   {dim}   {note}")
 
     # 标题行数：内容页必须一行。红竖块高 2.4u ＝ h1 一行，两行时竖块只够第一行，
     # 而且白白吃掉一行标题的高度（67px）。封面例外。

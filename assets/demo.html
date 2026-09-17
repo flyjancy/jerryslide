@@ -129,7 +129,16 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
   margin-bottom:var(--gap-frame)}                               /* ② 主标题 */
 .lead{font-size:var(--fs-lead);line-height:var(--lh-body);color:var(--ink2);
   flex:none;margin-bottom:var(--gap-frame);max-width:calc(var(--u) * 44)}  /* ③ 导语 */
-.body{flex:1;min-height:0;overflow:hidden}                      /* ④ 正文区 */
+.body{flex:1;min-height:0;overflow:hidden;
+  /* ④ 正文区。内容少的那页，让它在正文区里**垂直居中**，而不是贴顶 —— 贴顶会在
+     下方留一坨空白，看着像「半页空着」。那种空白**不该用灰字注解去垫**
+     （FAILURES F16：数字绿了、页面却没变好），该让内容落到区域的视觉中心。
+     ⚠️ 用 align-content，**不是 display:flex**：块容器上的 align-content 在
+     Chrome 123+ 生效，且**不改变布局模式** —— 各页自己写的 style="display:flex"
+     （截图页要横排）不会被翻转成竖排（踩过，见 FAILURES F17）。
+     safe center：放得下就居中，放不下退回顶端 —— 超量只会往下溢出，check.py
+     照样抓得到；旧浏览器忽略这一行 = 退回贴顶，不会坏。 */
+  align-content:safe center}
 /* ⚠️ flex:1 意味着内容超量时不会把页脚顶下去，而是直接压在落点句上。
    overflow:hidden 把它变成裁切而不是重叠；真正的防线是 check.py。 */
 
