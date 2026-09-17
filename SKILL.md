@@ -49,7 +49,7 @@ disable-model-invocation: true
 
 ---
 
-## 2 · 工作流：五条命令
+## 2 · 工作流：六条命令
 
 ```bash
 # ① 起手（第二个参数是 deck 的 <title>，不给就用文件名）
@@ -67,7 +67,15 @@ disable-model-invocation: true
 
 # ④ 字体 → PDF → 验收，一条命令
 "$SKILL/scripts/build.sh" 我的deck.html
+
+# ⑤ 这份 deck 要讲的话，配一份 讲稿.md 并逐页对账
+"$SKILL/scripts/scriptcheck.py" 我的deck.html 讲稿.md
 ```
+
+**第 ⑤ 步为什么存在**：h1 是英文短语，`data-notes` 只有一句话 ——
+讲的人站在台上时需要一个**中文对照**：这页标题在说什么、我该说什么、在哪停。
+2026-09-17 的原话是「有点看不懂你写的标题，能不能写个简单的讲稿」。
+页数、逐页标题、文风都由 `scriptcheck.py` 对账（§7.5 有格式与判据）。
 
 **第 ③.5 步为什么存在**：CSS 居中的对象是**字宽盒子**，人眼看的是**墨迹**，两者差在
 字形左右边距 —— 短字符串尤其明显，`Q & A` 与页脚那句差 4px，表现是「两段空隙不等宽」
@@ -149,7 +157,8 @@ disable-model-invocation: true
 ```
 第 1 页 = 封面 (.cover)      必须
 第 2 页 = 目录 (.toc)        必须；条目 ≤5 行，超了按主题归组
-末  页 = 收尾 (.end + .qa)   必须；标题 Thanks ＋ 正中 Q & A
+讲稿（要讲就写）  <deck 目录>/讲稿.md —— 逐页「标题意思 + 讲 + 停顿」
+                  `scriptcheck.py` 对账：页数 / 逐页标题 / 文风
 ```
 
 ### 页面骨架（五个锚点，只有 ③ 伸缩）
@@ -256,7 +265,7 @@ references/RULES.md      完整规范 + 推导 + 实测数据（唯一真相源�
 references/BUILD.md      怎么跑（手动五步 + 四个坑）
 references/FAILURES.md   ★ 静默失败清单 F1–F15 + 被证伪的假设
 scripts/                 build.sh · check.py · build_font.py · inkcenter.py ·
-                         newdeck.py · setpages.py · parts.py
+                         newdeck.py · setpages.py · parts.py · scriptcheck.py
 assets/template.html     12 页零件库
 assets/demo.html         用模板做的成品，9 页
 assets/tests/            反向用例（`check.py --self-test` 用）
