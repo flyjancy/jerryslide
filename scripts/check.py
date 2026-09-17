@@ -468,6 +468,58 @@ def ink_check(data, src):
     return bad
 
 
+# 填充语 / 夸张词 / 黑话 —— 「占了位置但不装信息」的词。
+# 规范借自 read-paper skill 的写作规范（2026-09-17）：目标是让读者一眼抓住结论，
+# 不是展示文采。幻灯片比论文报告更狠一层 —— **观众没有回读的机会**。
+# 引用别人的原话时可以保留：用「」/“” 括起来即豁免（同 read-paper 的「标明是引用」）。
+# 为什么查**可见文字**而不查讲者备注：备注是口头脚本，口语词在说话时是自然的；
+# 这一条管的是观众看到的字。见 RULES §7「文风」。
+PROSE_BANNED = [
+    ("值得注意的是", "填充语"), ("需要注意的是", "填充语"), ("不难看出", "填充语"),
+    ("众所周知", "填充语"), ("综上所述", "填充语"), ("总而言之", "填充语"),
+    ("毋庸置疑", "填充语"), ("显而易见", "填充语"), ("一言以蔽之", "填充语"),
+    ("颠覆性", "夸张"), ("革命性", "夸张"), ("史上最", "夸张"), ("无与伦比", "夸张"),
+    ("极致", "夸张"), ("完美", "夸张"), ("神器", "夸张"), ("秒杀", "夸张"),
+    ("逆天", "夸张"), ("炸裂", "夸张"), ("爆表", "夸张"),
+    ("说白了", "口语"), ("搞一下", "口语"), ("搞定", "口语"),
+    ("赋能", "黑话"), ("闭环", "黑话"), ("抓手", "黑话"), ("打法", "黑话"),
+    ("颗粒度", "黑话"), ("组合拳", "黑话"),
+]
+
+
+def visible_text(src):
+    """观众看到的字：去掉讲者备注、style/script、注释、标签。"""
+    s = re.sub(r'data-notes=".*?"', "", src, flags=re.S)
+    s = re.sub(r"<style>.*?</style>", "", s, flags=re.S)
+    s = re.sub(r"<script>.*?</script>", "", s, flags=re.S)
+    s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
+    return re.sub(r"<[^>]+>", " ", s)
+
+
+def prose_check(src):
+    """文风：不用填充语、夸张词、黑话（read-paper 的写作规范，见 RULES §7）。
+
+    这类词的危险不在难听，在于**占位置**：一页只能放这么多字，
+    「值得注意的是」占掉的那七个字本可以是证据。
+    """
+    txt = visible_text(src)
+    quoted = "".join(re.findall(r"「[^」]*」|“[^”]*”", txt))    # 引用豁免
+    hits = []
+    for word, kind in PROSE_BANNED:
+        n = txt.count(word) - quoted.count(word)
+        if n > 0:
+            hits.append((word, kind, n))
+    print("文风（只看观众看到的字）")
+    if not hits:
+        print("  ✓ 没有填充语 / 夸张词 / 黑话")
+    else:
+        for word, kind, n in hits:
+            print(f"  ✗ {kind}：「{word}」（{n} 处）—— 占位置不装信息，删掉或换成人话")
+        print("      引用别人的原话可以保留：用「」括起来即豁免。")
+        print("      清单在 check.py 的 PROSE_BANNED，规范见 RULES §7「文风」。")
+    return 1 if hits else 0
+
+
 def font_coverage_check(src):
     """内联字体里有没有缺字。
 
@@ -604,6 +656,7 @@ def self_test():
         path = os.path.join(tdir, fn)
         src = open(path, encoding="utf-8").read()
         n = static_checks(src, path)
+        n += prose_check(src)
         n += overflow_check(chrome, path)
         should_fail = expect.get(fn, True)
         got = n > 0
@@ -635,6 +688,7 @@ def main():
 
     src = open(path, encoding="utf-8").read()
     bad = static_checks(src, path)
+    bad += prose_check(src)
     bad += font_coverage_check(src)
     bad += overflow_check(find_chrome(), path)
     if pdf:
