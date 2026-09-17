@@ -128,6 +128,14 @@ disable-model-invocation: true
 --line: 0px solid #b8b8b8        ← 已决定：全部不用线
 ```
 
+### deck 级结构（三件套，`check.py` 逐条判）
+
+```
+第 1 页 = 封面 (.cover)      必须
+第 2 页 = 目录 (.toc)        必须；条目 ≤5 行，超了按主题归组
+末  页 = 收尾 (.end + .qa)   必须；标题 Thanks ＋ 正中 Q & A
+```
+
 ### 页面骨架（五个锚点，只有 ③ 伸缩）
 
 ```
@@ -170,6 +178,7 @@ disable-model-invocation: true
 |---|---|
 | 并列条目，「第几」有含义 | `.rows`（四条带小注时加 `.tight`） |
 | deck 的地图（**每份必有**） | `.toc` —— 条目 >5 先按主题归组 |
+| deck 的收尾（**每份必有**） | `.end` ＋ `.qa` —— 标题 `Thanks` ＋ 正中 `Q & A` |
 | 顺序不承载信息的短条目 | `.bullets` |
 | 一句话一条的论点 | `.args`（五条时加 `.tight`） |
 | 两栏对照 A 对 B | `.pair` |
