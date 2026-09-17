@@ -415,16 +415,28 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
 .ti .tt{font-size:var(--fs-key);font-weight:600;flex:none}
 .ti .td{font-size:var(--fs-body);color:var(--ink2);margin-left:auto;text-align:right}
 
-/* ══ 原型 · 章节页 ════════════════════════════════════════════════════
-   每个 section 开头单独一页。和封面同构，但轻一级。                */
-.sect{justify-content:center}
-.sect .snum{font-family:var(--font-title);font-size:calc(var(--u)*2.6);
-  line-height:1;color:var(--accent);flex:none;margin-bottom:calc(var(--u)*0.4)}
-.sect .sline{width:calc(var(--u)*2.4);height:calc(var(--u)*0.2);
-  background:var(--accent);flex:none;margin-bottom:calc(var(--u)*0.7)}
-.sect h1{font-size:calc(var(--u)*1.72);margin-bottom:calc(var(--u)*0.5)}
-.sect .sub{font-size:var(--fs-lead);color:var(--ink2);line-height:1.55;
-  max-width:calc(var(--u)*30)}
+/* ══ 原型 · 章节分隔页（满高红竖带）════════════════════════════════════
+   每个 section 开头一页。做法是把每页标题左边那个红竖块（.ttl .bar）
+   **放大到满高** —— 同一个母题说得更响，而不是新引入一整页红底：
+   底色仍是白，不破铁律 6「一份 deck 一个底色」。
+   - 竖带用负偏移顶到页面边缘，所以 .chapter 必须 overflow:hidden ——
+     否则 PDF 分页时它会渗到相邻页（试做时踩到过）。
+   - 左内边距置 0 让竖带贴左边缘；正文与页脚各自把 --pad-x 补回来，
+     **页脚的 grid 宽度与其它页完全一致**，中槽才仍然居中于页面。
+   - .cnum 是编号（居中在竖带里）；.sub 逐字取自目录同一条的说明 ——
+     check.py 核对编号与文字：导航件错一位比没有更糟，观众会以为跳到了别章。
+   2026-09-17 取代旧的 .sect（与封面同构的那版：配上页脚会飘在页面中间）。 */
+.chapter{padding-left:0;overflow:hidden}
+.chapter .cband{position:absolute;left:0;top:calc(-1*var(--pad-t));
+  bottom:calc(-1*var(--pad-b));width:calc(var(--u)*10);background:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.chapter .cband .cnum{font-family:var(--font-title);font-size:var(--fs-cover);
+  line-height:1;color:var(--paper)}
+.chapter .body{margin-left:calc(var(--u)*12.4);align-content:safe center}
+.chapter h1{font-size:var(--fs-cover);line-height:1.08;letter-spacing:-.02em}
+.chapter .sub{font-size:var(--fs-lead);color:var(--ink2);line-height:1.5;
+  margin-top:calc(var(--u)*0.6);max-width:calc(var(--u)*30)}
+.chapter .foot{margin-left:var(--pad-x);border-top-color:transparent}
 
 </style>
 </head>
@@ -445,17 +457,19 @@ code{font-family:var(--font-title);font-size:.9em;background:var(--face);
       <div class="ti"><span class="tn">01</span><span class="tt">前提变了</span><span class="td">屏幕共享不是投影仪</span></div>
       <div class="ti"><span class="tn">02</span><span class="tt">两个场景</span><span class="td">约束几乎完全相反</span></div>
       <div class="ti"><span class="tn">03</span><span class="tt">四条硬规则</span><span class="td">真正救得回来的东西</span></div>
-      <div class="ti"><span class="tn">04</span><span class="tt">怎么用</span><span class="td">一个能闭环的工作流</span></div>
+      <div class="ti"><span class="tn">04</span><span class="tt">怎么用</span><span class="td">一个能跑通的完整工作流</span></div>
     </div>
   </div>
   <div class="foot"><span class="ftitle">零件库 · 原型展示</span><span class="pno"></span></div>
 </section>
 
-<section class="slide sect" data-notes="章节页：每个 section 开头单独一页，让观众知道换话题了。">
-  <div class="snum">01</div>
-  <div class="sline"></div>
-  <h1>前提变了</h1>
-  <p class="sub">投影那套约束已经失效 —— 现在决定一切的，是对方窗口有多大。</p>
+<section class="slide chapter" data-notes="章节页：每个 section 开头一页，让观众知道换话题了。编号跟 section 走，不跟页码走。">
+  <div class="cband"><span class="cnum">01</span></div>
+  <div class="body">
+    <h1>Not a projector</h1>
+    <p class="sub">屏幕共享不是投影仪</p>
+  </div>
+  <div class="foot"><span class="ftitle">Deck full title</span><span class="pno"></span></div>
 </section>
 
 <section class="slide" data-notes="条目表：u=28px、无导语时放得下 3 行（含英文小注）。">

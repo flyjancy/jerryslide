@@ -388,6 +388,14 @@ def static_checks(src, path=None):
                   f"标题行不再要小节标签（RULES.md 骨架）")
             n += 1
 
+        # .sect 2026-09-17 被 .chapter（满高红竖带）取代。
+        # 旧那版与封面同构，配上标准页脚后 justify-content:center 会把页脚当普通子项
+        # 一起居中 —— **页脚飘在页面中间**（定义了一年、一次没用过，所以一直没发现）。
+        if re.search(r'<section class="[^"]*\bsect\b', src):
+            print("  ✗ 用了已废弃的 .sect（章节页旧原型）—— 改用 .chapter（满高红竖带）："
+                  "旧那版配上标准页脚会把页脚一起居中，飘在页面中间（RULES.md §6）")
+            n += 1
+
     # title —— 三次冷启动测试里，一个 agent 把模板的 title 原样交付了。
     # <title> 住在外壳里，页面上完全看不见，但窗口标题/浏览器标签/PDF 元数据都用它。
     TPL_TITLE = "幻灯片规范 · 零件库"
@@ -727,7 +735,7 @@ def self_test():
         return 1
     chrome = find_chrome()
     expect = {"bad_A.html": True, "bad_B.html": True, "bad_C.html": True,
-              "good.html": False}
+              "bad_D.html": True, "bad_E.html": True, "good.html": False}
     fails = 0
     print("自检：反向用例")
     for fn in sorted(os.listdir(tdir)):
