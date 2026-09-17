@@ -44,6 +44,31 @@ find_chrome() {
   return 1
 }
 
+# ── 优先 chrome-headless-shell（Chromium 官方的独立 headless 二进制）──────
+# 为什么不直接用 Chrome 主程序：`--headless=new` 仍然会走 [NSApplication
+# sharedApplication]，并以 uiElement=0 注册到 WindowServer。Dock 于是给每次
+# 调用插一个临时格子、半秒后再删掉（--dump-dom 一次、--print-to-pdf 一次）。
+# Dock 整排是居中的，多一格少一格都会左右弹一下 —— 一份 deck 要跑 build +
+# check + inkcenter 十几次，跳得人以为系统出问题了。
+# chrome-headless-shell 不注册 WindowServer，静默。
+#
+# 出图是像素级一致的：同一份 deck 两条路径各导一次，9 页逐页 0 像素差异，
+# 只有 PDF 的 Creator 元数据字段不同。
+# Chrome < 152 没有这个二进制，回落到主程序 —— 功能不变，只是 Dock 还会跳。
+find_headless_shell() {
+  local c
+  for c in \
+    "${CHROME_HEADLESS_SHELL:-}" \
+    "$HOME"/.cache/chrome-headless-shell/*/chrome-headless-shell \
+    "$(command -v chrome-headless-shell 2>/dev/null || true)" \
+    "/opt/homebrew/bin/chrome-headless-shell" \
+    "/usr/local/bin/chrome-headless-shell"
+  do
+    [ -n "$c" ] && [ -x "$c" ] && { echo "$c"; return 0; }
+  done
+  return 1
+}
+
 # ── 体检 ────────────────────────────────────────────────────────────
 # 返回 0 = 全绿。任何一项没过就返回 1，并把「现在该怎么办」说出来。
 doctor() {
@@ -103,12 +128,18 @@ doctor() {
 
   # 5 · Chrome
   local ch
-  if ch="$(find_chrome)"; then
+  if ch="$(find_headless_shell)"; then
+    echo "  ✓ headless shell  $ch"
+    echo "        （Dock 不会跳；主程序 --headless=new 每次会在 Dock 插一下）"
+  elif ch="$(find_chrome)"; then
     echo "  ✓ Chrome        $ch"
+    echo "        ⚠ 没有 chrome-headless-shell —— 每次导出 Dock 会跳一下。"
+    echo "          装法见 references/BUILD.md「chrome-headless-shell」一节。"
   else
     echo "  ✗ Chrome        找不到（导出 PDF 要用它）"
     echo "        找过：/Applications/Google Chrome.app/… · /Applications/Chromium.app/…"
     echo "              which google-chrome · google-chrome-stable · chromium · chromium-browser"
+    echo "              chrome-headless-shell · ~/.cache/chrome-headless-shell/*/chrome-headless-shell"
     bad=1
   fi
 
@@ -164,7 +195,12 @@ echo "① 字体子集化 + 内联 —— 改过任何文字都必须跑这一�
 "$VENV" "$SCRIPT_DIR/build_font.py" "$DECK" | sed 's/^/   /'
 
 echo "② 导出 PDF → $OUT"
-"$(find_chrome)" --headless=new --disable-gpu --no-pdf-header-footer \
+# 优先 headless shell（不注册 WindowServer，Dock 不跳）；回落主程序则必须
+# 显式给 --headless=new —— shell 自带 headless，不接受这个 flag。详见顶部。
+if CHROME_BIN="$(find_headless_shell)"; then HEADLESS_FLAG=""; else
+  CHROME_BIN="$(find_chrome)"; HEADLESS_FLAG="--headless=new"
+fi
+"$CHROME_BIN" ${HEADLESS_FLAG:+"$HEADLESS_FLAG"} --disable-gpu --no-pdf-header-footer \
           --virtual-time-budget=6000 --print-to-pdf="$OUT" \
           "file://$DECK" >/dev/null 2>&1
 [ -s "$OUT" ] || { echo "✗ PDF 没生成" >&2; exit 1; }

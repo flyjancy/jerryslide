@@ -15,8 +15,38 @@
 |---|---|---|
 | Python + fontTools + brotli + Pillow | `~/.cache/slide-venv/bin/python` | 缓存在家目录，重建才要联网 |
 | Chrome | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` | headless 出 PDF 和截图 |
+| chrome-headless-shell | `~/.cache/chrome-headless-shell/*/chrome-headless-shell` | **优先用它** —— 不注册 WindowServer，Dock 不跳 |
 | poppler | `pdffonts` / `pdfinfo` | 只在验收时用 |
 | 缓存源字体 | `~/.cache/slide-fonts/` | `NotoSansSC-VF.ttf`（16.9 MB）· `Arimo-VF.ttf` |
+
+### chrome-headless-shell（强烈建议装）
+
+主程序的 `--headless=new` 仍然会走 `[NSApplication sharedApplication]`，并以
+`uiElement=0` 注册到 WindowServer。**Dock 于是给每次调用插一个临时格子、半秒后
+再删掉** —— Dock 整排是居中的，多一格少一格都会左右弹一下。一份 deck 要跑
+build + check + inkcenter 十几次，跳得人以为系统出问题了。
+
+`chrome-headless-shell` 是 Chromium 官方的独立 headless 二进制，**不注册
+WindowServer**。`build.sh` / `check.py` / `inkcenter.py` 都会优先用它
+（候选路径见 `build.sh` 的 `find_headless_shell`），找不到才回落主程序。
+
+出图是**像素级一致**的：同一份 deck 两条路径各导一次，9 页逐页 0 像素差异，
+只有 PDF 的 `Creator` 元数据字段不同（UA 串 vs `Chromium`）。
+
+```bash
+V=152.0.7977.82        # 挑和本机 Chrome 同大版本里最高的 CfT 构建
+curl -L -o /tmp/shell.zip \
+  "https://storage.googleapis.com/chrome-for-testing-public/$V/mac-arm64/chrome-headless-shell-mac-arm64.zip"
+unzip -q -o /tmp/shell.zip -d ~/.cache/chrome-headless-shell
+chmod +x ~/.cache/chrome-headless-shell/*/chrome-headless-shell
+```
+
+版本号从 [known-good-versions-with-downloads.json](https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json)
+里挑。**CfT 只有 Chromium 构建**，拿不到 Google 品牌版的同号（本机 `.83` 对应
+CfT `.82` 这种一位之差），取同 `15x.` 的最高即可。
+非 arm64 把 `mac-arm64` 换成 `mac-x64` / `linux64`。
+
+`build.sh --doctor` 会告诉你当前用的是哪个，以及没有 shell 时的提醒。
 
 ### ⚠️ 最脆的一环
 
@@ -136,6 +166,7 @@ $PY "$SCRIPTS/build_font.py" my-deck.html --latin arimo # 想换窄拉丁时才�
 ### ④ 验收
 
 ```bash
+# $CH = chrome-headless-shell（推荐）；回落主程序时在它后面加 --headless=new
 "$CH" --headless=new --disable-gpu --no-pdf-header-footer \
       --virtual-time-budget=6000 --print-to-pdf=/tmp/my-deck.pdf \
       "file://$PWD/my-deck.html"
@@ -154,6 +185,8 @@ for n in $(seq 1 9); do
     --screenshot=/tmp/s$n.png "file://$PWD/my-deck.html#$n"
 done
 ```
+
+（`--headless=new` 只在用主程序时给；headless shell 不接受这个 flag。）
 
 `#N` 是第 N 页。**窗口必须是 `1280,720`**，不是 `1280,807`（见 F6）。
 

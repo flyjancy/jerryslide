@@ -34,6 +34,7 @@ check.py —— slide 发布前自检
 """
 
 import json
+import glob
 import os
 import re
 import shutil
@@ -52,6 +53,20 @@ CHROME_CANDIDATES = [
     shutil.which("google-chrome-stable") or "",
     shutil.which("chromium") or "",
     shutil.which("chromium-browser") or "",
+]
+
+# chrome-headless-shell 是 Chromium 官方的独立 headless 二进制，**不注册
+# WindowServer**，所以 Dock 不会跳。主程序的 --headless=new 仍会以 uiElement=0
+# 注册 —— Dock 每次调用插一个临时格子、半秒后再删掉，整排图标左右弹一下。
+# 一份 deck 要跑十几次，很显眼。两者出图像素级一致（9 页逐页 0 差异），
+# 所以能换就换。见 build.sh 顶部同一段注释。
+HEADLESS_SHELL_CANDIDATES = [
+    os.environ.get("CHROME_HEADLESS_SHELL") or "",
+    *sorted(glob.glob(os.path.expanduser(
+        "~/.cache/chrome-headless-shell/*/chrome-headless-shell"))),
+    shutil.which("chrome-headless-shell") or "",
+    "/opt/homebrew/bin/chrome-headless-shell",
+    "/usr/local/bin/chrome-headless-shell",
 ]
 
 MIN_SLACK_LINES = 1.92   # 导语多折一行的高度 = --fs-lead(1.2u) × --lh-body(1.6)。
@@ -190,10 +205,18 @@ FORBIDDEN = [
 
 
 def find_chrome():
-    for c in CHROME_CANDIDATES:
+    # headless shell 优先 —— 它不会让 Dock 跳
+    for c in (*HEADLESS_SHELL_CANDIDATES, *CHROME_CANDIDATES):
         if c and os.path.exists(c):
             return c
-    sys.exit("✗ 找不到 Chrome。请改 check.py 里的 CHROME_CANDIDATES。")
+    sys.exit("✗ 找不到 Chrome / chrome-headless-shell。请改 check.py 里的 CHROME_CANDIDATES。")
+
+
+def headless_flag(chrome):
+    """chrome-headless-shell 自带 headless，不接受 --headless=new；主程序必须显式给。"""
+    if "chrome-headless-shell" in os.path.basename(chrome):
+        return []
+    return ["--headless=new"]
 
 
 def strip_print_blocks(css):
@@ -348,7 +371,7 @@ def overflow_check(chrome, path):
     tmp.close()
     try:
         r = subprocess.run(
-            [chrome, "--headless=new", "--disable-gpu", "--window-size=1400,900",
+            [chrome, *headless_flag(chrome), "--disable-gpu", "--window-size=1400,900",
              "--virtual-time-budget=3000", "--dump-dom", "file://" + tmp.name],
             capture_output=True, text=True, timeout=120)
         m = re.search(r'data-probe="(.*?)"', r.stdout, re.S)

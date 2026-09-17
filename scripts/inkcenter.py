@@ -37,6 +37,7 @@ transform 只改绘制位置，不动布局（不影响 flex/grid 排布，也�
 退出码：0 = 已居中（残差 ≤0.25px）；1 = 需要补偿 / 挂钩缺失 / 文案不一致。
 """
 import html as htmlmod
+import glob
 import json
 import os
 import re
@@ -52,6 +53,17 @@ CHROME_CANDIDATES = [
     shutil.which("google-chrome-stable") or "",
     shutil.which("chromium") or "",
     shutil.which("chromium-browser") or "",
+]
+
+# 见 check.py / build.sh 顶部同一段注释：headless shell 不注册 WindowServer，
+# Dock 不会跳；主程序 --headless=new 每次会插一格。
+HEADLESS_SHELL_CANDIDATES = [
+    os.environ.get("CHROME_HEADLESS_SHELL") or "",
+    *sorted(glob.glob(os.path.expanduser(
+        "~/.cache/chrome-headless-shell/*/chrome-headless-shell"))),
+    shutil.which("chrome-headless-shell") or "",
+    "/opt/homebrew/bin/chrome-headless-shell",
+    "/usr/local/bin/chrome-headless-shell",
 ]
 
 # (选择器, CSS 变量名, 人读名)
@@ -118,10 +130,18 @@ try{
 
 
 def find_chrome():
-    for c in CHROME_CANDIDATES:
+    # headless shell 优先 —— 它不会让 Dock 跳
+    for c in (*HEADLESS_SHELL_CANDIDATES, *CHROME_CANDIDATES):
         if c and os.path.exists(c):
             return c
-    sys.exit("✗ 找不到 Chrome。请改 inkcenter.py 里的 CHROME_CANDIDATES。")
+    sys.exit("✗ 找不到 Chrome / chrome-headless-shell。请改 inkcenter.py 里的 CHROME_CANDIDATES。")
+
+
+def headless_flag(chrome):
+    """chrome-headless-shell 自带 headless，不接受 --headless=new；主程序必须显式给。"""
+    if "chrome-headless-shell" in os.path.basename(chrome):
+        return []
+    return ["--headless=new"]
 
 
 def measure(chrome, path):
@@ -135,7 +155,7 @@ def measure(chrome, path):
     tmp.close()
     try:
         r = subprocess.run(
-            [chrome, "--headless=new", "--disable-gpu", "--window-size=1400,900",
+            [chrome, *headless_flag(chrome), "--disable-gpu", "--window-size=1400,900",
              "--virtual-time-budget=3000", "--dump-dom", "file://" + tmp.name],
             capture_output=True, text=True, timeout=120)
         m = re.search(r'data-probe="(.*?)"', r.stdout, re.S)
