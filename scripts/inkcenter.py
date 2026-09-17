@@ -148,9 +148,9 @@ def measure(chrome, path):
 
     groups = {}
     for it in data["items"]:
-        # 需要的平移量 = 页面中线 − 没有补偿时的墨迹中心
-        #   没有补偿时：adv(含旧 tx) − tx + inkOff
-        it["need"] = round(it["center"] - (it["adv"] - it["tx"] + it["inkOff"]), 4)
+        # 没有补偿时：adv(含旧 tx) − tx + inkOff
+        it["adv0"] = round(it["adv"] - it["tx"], 3)      # 未补偿的字宽盒子中心（稳定，便于对照）
+        it["need"] = round(it["center"] - (it["adv0"] + it["inkOff"]), 4)
         # 复测：当前实际落点
         it["now"] = round(it["adv"] + it["inkOff"] - it["center"], 4)
         groups.setdefault(it["key"], []).append(it)
@@ -198,8 +198,8 @@ def patch_root(src, values, notes):
     for _sel, key, txt in TARGETS:
         if key not in values:
             continue
-        lines.append(f"  --ink-dx-{key}: {values[key]}px;"
-                     f"{'' if key == 'ft' else '  '}  /* {txt}：{notes[key]} */")
+        decl = f"--ink-dx-{key}: {values[key]}px;"
+        lines.append(f"  {decl:<25}/* {txt}：{notes[key]} */")
     lines.append("  " + END + " ──────────────────────────────────────────── */")
     block = "\n".join(lines)
     body = body.rstrip()
@@ -252,7 +252,7 @@ def main():
         v = quantize(it["need"])
         values[key] = v
         notes[key] = (f"墨迹原偏 {fmt(it['inkOff'])}px → 平移 {fmt(v)}px"
-                      f"（字宽盒子中心 {it['adv']:.2f}，页面中线 {it['center']:.2f}）")
+                      f"（字宽盒子中心 {it['adv0']:.2f}，页面中线 {it['center']:.2f}）")
         if not as_json and not dry:
             pass
 
@@ -264,7 +264,7 @@ def main():
             if not items:
                 continue
             it = items[0]
-            print(f"   {sel:<16} {it['adv']:>10.2f} {fmt(it['inkOff']):>10} "
+            print(f"   {sel:<16} {it['adv0']:>10.2f} {fmt(it['inkOff']):>10} "
                   f"{fmt(it['need']):>10} {fmt(values[key]):>8}px {len(items):>6}")
         print()
 
