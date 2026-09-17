@@ -304,6 +304,7 @@ def static_checks(src, path=None):
     # 命中了封面标题 "Why your plan needs a smarter reviewer"，目录被插到封面之前；
     # 而目检那一步又正好把封面看成了目录 —— 两道防线同时失效（FAILURES.md F8c）。
     secs = re.findall(r'<section class="slide.*?</section>', src, re.S)
+    _is_tpl = os.path.basename(path or "") in ("template.html", "demo.html")
     if secs and re.search(r"var\(--u\)", raw_css):
         m0 = re.search(r'<section class="([^"]*)"', secs[0])
         first_is_cover = bool(m0) and "cover" in m0.group(1)
@@ -375,7 +376,11 @@ def static_checks(src, path=None):
         # 提问期间观众一直看的就是这一页，所以它有固定形态：标题 Thanks ＋ Q & A。
         last = secs[-1]
         last_cls = re.search(r'<section class="([^"]*)"', last).group(1)
-        if "end" in last_cls and 'class="qa"' in last:
+        if _is_tpl:
+            # template / demo 是**零件库**，不是交付物：模板把原型页排在 .end 之后，
+            # demo 的末页是内容页 —— 都给零件展示用，所以这一条对它们不适用。
+            print("  · 收尾页：模板 / demo 是零件库，末页不判（交付物才判）")
+        elif "end" in last_cls and 'class="qa"' in last:
             print("  ✓ 收尾页：.end ＋ 正中 Q & A")
         else:
             print(f"  ✗ 最后一页不是收尾页（class='{last_cls}'）—— 每份 deck 的最后一页"
