@@ -144,10 +144,15 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
 
 .foot{flex:none;margin-top:var(--gap-frame);padding-top:var(--gap-tight);
   border-top:var(--line);                             /* ⑥ 页脚   */
-  display:flex;align-items:baseline;gap:var(--gap-tight);
+  /* 用 grid 而不是 flex：两侧各 1fr，中槽（deck 全名）才真正居中于**页面**。
+     flex 版把页码算进流里，中槽只能居中于「页码之外的剩余空间」——
+     实测偏左 55px@2000px（＝舞台 35px）。2026-09-17 被指出来。 */
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr);
+  column-gap:var(--gap-tight);align-items:baseline;
   font-size:var(--fs-foot);color:var(--muted);letter-spacing:.06em}
-.foot .ftitle{flex:1;text-align:center}
-.foot .pno{font-family:var(--font-title);color:var(--ink2);letter-spacing:.04em}
+.foot .ftitle{grid-column:2;text-align:center;min-width:0}
+.foot .pno{grid-column:3;justify-self:end;white-space:nowrap;
+  font-family:var(--font-title);color:var(--ink2);letter-spacing:.04em}
 
 /* ════════════════════════════════════════════════════════════════════════
    §6 原型 —— 一个标准页 = 骨架 ＋ 任意一种
@@ -252,6 +257,9 @@ h1{font-family:var(--font-title);font-size:var(--fs-h1);line-height:var(--lh-tig
    收尾页 = 标题「Thanks」＋ 正中一个 Q & A，整页只有这两个元素。
    Q&A 撑满正文区居中（flex:1 ＋ height:100%），顺带消掉「半页空着」那条警告。 */
 .qa{flex:1;display:flex;align-items:center;justify-content:center;height:100%;
+  /* padding 把文字抬到**整页几何中心**：正文区的中心比页面中心低 2.5u/2，
+     因为上面的标题块比下面的页脚块高（实测偏低 35px@1280 舞台）。 */
+  padding-bottom:calc(var(--u) * 2.5);
   font-family:var(--font-title);font-size:var(--fs-cover);font-weight:700;
   color:var(--ink);letter-spacing:.02em}
 

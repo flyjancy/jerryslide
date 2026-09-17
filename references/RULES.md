@@ -406,6 +406,12 @@ python3 -m pip install fonttools brotli
 
 **页脚 = 文档身份条。** 中间告诉读者「这是哪份」，右边告诉「到哪了」。
 
+> **中槽必须居中于「页面」，不是居中于「页码之外的剩余空间」。**
+> 用 `display:flex` ＋ `.ftitle{flex:1}` 会把页码算进流里，中槽于是偏左 ——
+> 实测偏 **35px@舞台**（2026-09-17 被指出来）。页脚用
+> `grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr)`：
+> 两侧等宽，中槽自动落在页面中线上，页码用 `justify-self:end` 靠右，**不在流里影响中槽**。
+
 #### 讲者**只出现在封面** —— 本模板固定为 `Fengrui`
 
 | 位置 | 值 | 出现频率 |
