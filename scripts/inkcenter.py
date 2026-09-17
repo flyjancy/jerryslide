@@ -62,7 +62,8 @@ TARGETS = [
 
 STEP = 0.25        # 写入值的量化步长（px）
 TOL = 0.25         # 复测残差上限（px）：墨迹中心距页面中线
-CONSIST = 0.5      # 同一 key 在多页出现时，各页量出的平移量必须一致到这个精度
+CONSIST = 0.3      # 同一 key 在多页出现时，各页量出的补偿量必须一致到这个精度。
+                   # 同一个字符串应该完全一致（实测抖动 0）；不同字符串差 0.5px 以上
 
 BEGIN = "/* ── 光学居中（墨迹） begin"
 END = "/* ── 光学居中（墨迹） end"
@@ -220,8 +221,10 @@ def check_hooks(src):
 
 def main():
     args = [a for a in sys.argv[1:]]
-    dry = "--dry-run" in args
     as_json = "--json" in args
+    # --json 也是**只读**：只量不写，输出机器可读结果（check.py / 排查用）。
+    # 早先的版本 --json 会写文件 —— 那是个坑，调用方想看一眼却被改了 deck。
+    dry = ("--dry-run" in args) or as_json
     paths = [a for a in args if not a.startswith("--")]
     if len(paths) != 1:
         sys.exit(__doc__.strip().split("用法\n────\n")[-1].split("\n\n")[0].strip())
@@ -229,6 +232,10 @@ def main():
 
     chrome = find_chrome()
     src = open(path, encoding="utf-8").read()
+    hooks = {key: bool(re.search(r"translateX\(\s*var\(\s*--ink-dx-" + key, src))
+             for _sel, key, _t in TARGETS}
+    registered = {key: bool(re.search(r"--ink-dx-" + key + r"\s*:", src))
+                  for _sel, key, _t in TARGETS}
     if not dry:
         check_hooks(src)
 
@@ -238,6 +245,7 @@ def main():
         return 0
 
     values, notes, bad = {}, {}, 0
+    residuals, counts = {}, {}
     for sel, key, txt in TARGETS:
         items = groups.get(key)
         if not items:
@@ -245,16 +253,31 @@ def main():
         needs = [it["need"] for it in items]
         spread = max(needs) - min(needs)
         if spread > CONSIST:
-            print(f"✗ {sel} 在各页量出的补偿量不一致（{min(needs):+.2f} … {max(needs):+.2f}px，"
-                  f"差 {spread:.2f}px）—— {txt} 在不同页上文案或字号不同？")
-            bad += 1
+            # 拒绝写入：写了就是一页对、另一页错，而且 check.py 会报「已登记但超限」，
+            # 很难看出真因。按 RULES §4，页脚中槽是 **deck 全名，每页相同**。
+            print(f"✗ {sel} 在各页量出的补偿量不一致（差 {spread:.2f}px > {CONSIST}px）")
+            by_text = {}
+            for it in items:
+                by_text.setdefault(it["text"], []).append(it["slide"])
+            if len(by_text) > 1:
+                print(f"   {txt} 在本 deck 里有 {len(by_text)} 种文案：")
+                for t, pg in sorted(by_text.items(), key=lambda kv: -len(kv[1])):
+                    pages = "、".join(str(p) for p in sorted(pg))
+                    print(f"     第 {pages} 页：「{t}」（墨迹原偏 "
+                          f"{fmt([i for i in items if i['text'] == t][0]['inkOff'])}px）")
+                print(f"   页脚中槽的语义是 **deck 全名，每页相同**（RULES §4）——"
+                      f"先改成同一个字符串，再跑本脚本。")
+                print("   （模板/零件库这种多文案的地方才需要；真 deck 不该出现。）")
+            else:
+                print(f"   同一文案在同一页上量出了不同值 —— 字号或排版被逐页改过？")
+            return 1
         it = items[0]
         v = quantize(it["need"])
         values[key] = v
         notes[key] = (f"墨迹原偏 {fmt(it['inkOff'])}px → 平移 {fmt(v)}px"
                       f"（字宽盒子中心 {it['adv0']:.2f}，页面中线 {it['center']:.2f}）")
-        if not as_json and not dry:
-            pass
+        residuals[key] = max(abs(x["now"]) for x in items)
+        counts[key] = len(items)
 
     if not as_json:
         print(f"逐页光学居中（舞台缩放 {scale:.3f}，页面中线 {groups[list(groups)[0]][0]['center']:.2f}）")
@@ -269,7 +292,13 @@ def main():
         print()
 
     if dry:
-        return 1 if any(abs(v) > TOL for v in values.values()) else 0
+        if as_json:
+            print(json.dumps({"registered": registered, "hooks": hooks,
+                              "values": values, "residuals": residuals,
+                              "worst": round(max(residuals.values()) if residuals else 0.0, 3),
+                              "pages": counts}, ensure_ascii=False))
+        return 1 if (not all(hooks.values()) or
+                     any(abs(r) > TOL for r in residuals.values())) else 0
 
     new = patch_root(src, values, notes)
     if new != src:
@@ -289,7 +318,10 @@ def main():
         print(f"\n✗ 仍有 {worst:.3f}px 偏差（上限 {TOL}px）—— 检查挂钩是否真的生效。")
         return 1
     if as_json:
-        print(json.dumps({"values": values, "worst": round(worst, 3)}, ensure_ascii=False))
+        print(json.dumps({"registered": registered, "hooks": hooks,
+                          "values": values, "residuals": residuals,
+                          "worst": round(worst, 3), "pages": counts},
+                         ensure_ascii=False))
     else:
         print(f"\n✓ 已按墨迹居中（最大残差 {worst:.3f}px）。"
               f"⚠️ 改过文字/字号后必须重跑本脚本，并重跑 build.sh。")

@@ -49,7 +49,7 @@ disable-model-invocation: true
 
 ---
 
-## 2 · 工作流：四条命令
+## 2 · 工作流：五条命令
 
 ```bash
 # ① 起手（第二个参数是 deck 的 <title>，不给就用文件名）
@@ -62,9 +62,17 @@ disable-model-invocation: true
 # ③ 贴回去（检查全过才落盘）
 "$SKILL/scripts/setpages.py" 我的deck.html
 
+# ③.5 按墨迹居中：尾页 Q & A 与页脚 deck 名（量测 → 写进 :root → 复测）
+"$SKILL/scripts/inkcenter.py" 我的deck.html
+
 # ④ 字体 → PDF → 验收，一条命令
 "$SKILL/scripts/build.sh" 我的deck.html
 ```
+
+**第 ③.5 步为什么存在**：CSS 居中的对象是**字宽盒子**，人眼看的是**墨迹**，两者差在
+字形左右边距 —— 短字符串尤其明显，`Q & A` 与页脚那句差 4px，表现是「两段空隙不等宽」
+（空隙短时占 6%，看得出来）。值由脚本量测写入，**不要手改**；文案一改就重跑它。
+推导与实测数据在 `references/RULES.md` §4「居中对象是墨迹」。
 
 **为什么页面要抽出来改**：一份 deck 450 KB，其中 400 KB 是内联字体的 base64。
 在里面找锚点很难受，**而且锚点找错是静默吞内容的**。
@@ -206,6 +214,7 @@ disable-model-invocation: true
 | 删 UI 时正则吃掉半个标签 | **整个 JS 死掉**（不居中 / 页码空） | ✗ 像「样式没加载」 |
 | 忘了改外壳里的 `<title>` | 交付物顶着模板的名字 | ✗ |
 | 弹性行里的元素被 `width:100%` 的兄弟挤成 0 宽 | **在 DOM 里但渲染不出来** | ✗ |
+| 只按字宽盒子居中（`Q & A` / 页脚） | 两段空隙不等宽（短空隙时 6%） | **✗ 单页永远看不出** |
 | 溢出了就缩字号 | 破坏整套体系的前提 | ✓ 但**你会觉得是在帮忙** |
 
 **`check.py` 抓得到一半，另一半只有两件事能抓：渲图看一眼，或者读 `references/FAILURES.md`。**
@@ -232,8 +241,8 @@ disable-model-invocation: true
 ```
 references/RULES.md      完整规范 + 推导 + 实测数据（唯一真相源）
 references/BUILD.md      怎么跑（手动五步 + 四个坑）
-references/FAILURES.md   ★ 静默失败清单 F1–F11 + 被证伪的假设
-scripts/                 build.sh · check.py · build_font.py ·
+references/FAILURES.md   ★ 静默失败清单 F1–F15 + 被证伪的假设
+scripts/                 build.sh · check.py · build_font.py · inkcenter.py ·
                          newdeck.py · setpages.py · parts.py
 assets/template.html     12 页零件库
 assets/demo.html         用模板做的成品，9 页

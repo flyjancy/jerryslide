@@ -412,6 +412,46 @@ python3 -m pip install fonttools brotli
 > `grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr)`：
 > 两侧等宽，中槽自动落在页面中线上，页码用 `justify-self:end` 靠右，**不在流里影响中槽**。
 
+#### 居中对象是**墨迹**，不是字宽盒子（2026-09-17）
+
+CSS 的 `text-align:center` 与 flex 居中，居中的是**字宽盒子**：从第一个字形起点到
+最后一个字形步进宽度（**含尾部 `letter-spacing`**）。人眼看的是**墨迹外沿**，
+两者之差＝字形左右边距（side bearing）之差：
+
+| 对象 | 左肩 | 右肩 | 墨迹相对盒子中心 |
+|---|---|---|---|
+| `Q & A`（84px，3 个字符） | 14.8px | 13.8px | **+0.83px** |
+| 页脚那句（14px，长句） | 4.6px | 7.6px | **−0.66px** |
+
+**短字符串放大这个不对称**（`Q` 是圆形字、左肩大；`A` 右肩小），长句把它平均掉。
+后果是两段空隙不等宽：「Q&A 到页脚左端」比「A 到页脚右端」宽
+
+```
+2 × (0.83 − (−0.66)) ≈ 3px     实测 4px（jerrypi 尾页：左 100 / 右 96）
+```
+
+空隙 98px 时占 4%；页脚文案更短的那份（Reviewer，空隙 58px）占 **6%** ——
+**同一支 4px 的差，空隙越短越显眼**。这就是「我以为两者都居中了、但看起来不是」的根源。
+
+**规则：`.qa` 与 `.foot .ftitle` 必须按墨迹居中。**
+
+| 谁 | 做什么 |
+|---|---|
+| CSS | 两条挂钩：`.qa{transform:translateX(var(--ink-dx-qa,0px))}`、`.foot .ftitle{…var(--ink-dx-ft,0px)}`。**只改绘制位置，不动布局** —— flex/grid 排布、页脚三栏、翻页都不受影响 |
+| `scripts/inkcenter.py` | 量测（canvas `measureText().actualBoundingBox*`，亚像素、不依赖光栅化）→ 写进 `:root` 的 `--ink-dx-*`（每条带推导）→ **复测**并报残差 |
+| `check.py` | 断言墨迹中心距页面中线 ≤0.5px。**登记过 `--ink-dx-*` 的 deck 硬判**；没登记只警告（渐进铺开用） |
+
+**数值不许手改，也不许凭眼睛调**：文案或字号一动就重跑
+
+```bash
+"$SKILL/scripts/inkcenter.py" 我的deck.html        # --dry-run 只看不改 · --json 机器可读
+```
+
+**改完必须重跑 `build.sh`**（PDF 要重建，否则发出去的还是旧几何）。
+
+> **模板/demo 里不登记数值**：它们的字体被剥掉了（见 §2.5），量出来的是**回退字体**
+> 的边距，不是真字体的。挂钩留着（`0px` 兜底），新建 deck 后跑一次 `inkcenter.py`。
+
 #### 讲者**只出现在封面** —— 本模板固定为 `Fengrui`
 
 | 位置 | 值 | 出现频率 |

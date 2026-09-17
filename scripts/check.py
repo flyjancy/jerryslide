@@ -56,6 +56,7 @@ CHROME_CANDIDATES = [
 
 MIN_SLACK_LINES = 1.92   # 导语多折一行的高度 = --fs-lead(1.2u) × --lh-body(1.6)。
                          # 见文件头第 4 条。乘 u 在运行时算。
+INK_TOL = 0.5            # 墨迹中心距页面中线的上限（px）。见 RULES §4「居中对象是墨迹」。
 
 PROBE = r"""
 <script>
@@ -83,7 +84,7 @@ window.onerror = function(m, s, l){
   }
   var sc = applied;
   var o = {scale:+applied.toFixed(4), expect:+Math.min(window.innerWidth/1280, window.innerHeight/720).toFixed(4),
-           vw:window.innerWidth, vh:window.innerHeight, slides:[]};
+           vw:window.innerWidth, vh:window.innerHeight, slides:[], ink:[]};
   o.u = getComputedStyle(document.documentElement).getPropertyValue('--u').trim();
 
   document.querySelectorAll('.slide').forEach(function(s, i){
@@ -141,6 +142,32 @@ window.onerror = function(m, s, l){
     } else {
       it.h1lines = 0;
     }
+    /* 墨迹居中 —— 同一套算法在 scripts/inkcenter.py（由它写补偿值），两边必须一致。
+       CSS 居中的是**字宽盒子**（含尾部字距），人眼看的是**墨迹外沿**；两者差在
+       字形左右边距，短字符串尤其明显（Q & A 与页脚那句差 3–4px）→ 两段空隙不等宽。
+       见 RULES §4「居中对象是墨迹，不是字宽盒子」。 */
+    var sr2 = s.getBoundingClientRect();
+    [['.qa','qa'], ['.foot .ftitle','ft']].forEach(function(t){
+      s.querySelectorAll(t[0]).forEach(function(el){
+        var rg2 = document.createRange(); rg2.selectNodeContents(el);
+        var rs2 = rg2.getClientRects(), l2 = 1e9, r2 = -1e9;
+        for (var k = 0; k < rs2.length; k++){
+          if (!rs2[k].width && !rs2[k].height) continue;
+          l2 = Math.min(l2, rs2[k].left); r2 = Math.max(r2, rs2[k].right);
+        }
+        if (l2 > r2) return;
+        var cs2 = getComputedStyle(el);
+        var cvv = document.createElement('canvas'), cx2 = cvv.getContext('2d');
+        cx2.font = cs2.fontStyle + ' ' + cs2.fontWeight + ' ' + cs2.fontSize + ' ' + cs2.fontFamily;
+        if ('letterSpacing' in cx2) cx2.letterSpacing = cs2.letterSpacing;
+        var mm = cx2.measureText(el.textContent);
+        /* 墨迹中心相对字宽盒子中心的偏移（canvas 的 actualBoundingBox* 是墨迹外沿）*/
+        var inkOff = ((-mm.actualBoundingBoxLeft + mm.actualBoundingBoxRight) / 2)
+                   - ((r2 - l2) / sc) / 2;
+        var inkCenter = ((l2 + r2) / 2 - sr2.left) / sc + inkOff;
+        o.ink.push({p:i+1, key:t[1], off:+(inkCenter - sr2.width/sc/2).toFixed(3)});
+      });
+    });
     o.slides.push(it);
     s.style.display = prev;
   });
@@ -396,7 +423,48 @@ def overflow_check(chrome, path):
         bad += 1
     else:
         print("  ✓ 标题全部一行（封面除外）")
+
+    bad += ink_check(data, src)
     print()
+    return bad
+
+
+def ink_check(data, src):
+    """墨迹居中：.qa 与 .foot .ftitle 的墨迹中心必须落在页面中线上。
+
+    CSS 居中的对象是**字宽盒子**，人眼看的却是**墨迹** —— 两者差在字形左右
+    边距（Q 左肩 14.8px ≠ A 右肩 13.8px）。短字符串放大这个不对称：
+    「Q&A 到页脚左端」与「A 到页脚右端」差 2×(0.83+0.66) ≈ 3px，实测 4px；
+    空隙短时占 6%，看得出来。补偿值由 scripts/inkcenter.py 量测写入。
+    见 RULES §4「居中对象是墨迹，不是字宽盒子」。
+
+    分两档（渐进铺开）：登记过 --ink-dx-* 的 deck **硬判**；没登记的只警告
+    —— 模板与 demo 的字体被剥掉了，量出来的是回退字体的边距，不该拿它判死。
+    """
+    items = data.get("ink") or []
+    if not items:
+        return 0
+    names = {"qa": "Q & A（.qa）", "ft": "页脚 deck 名（.foot .ftitle）"}
+    by = {}
+    for it in items:
+        by.setdefault(it["key"], []).append(it)
+    print("墨迹居中（居中对象是墨迹，不是字宽盒子）")
+    bad = 0
+    for key in [k for k in ("qa", "ft") if k in by]:
+        worst = max(by[key], key=lambda x: abs(x["off"]))
+        off, page = worst["off"], worst["p"]
+        registered = re.search(r"--ink-dx-" + re.escape(key) + r"\s*:", src)
+        if abs(off) <= INK_TOL:
+            print(f"  ✓ {names[key]}：墨迹中心距页面中线 {off:+.3f}px（最差页 {page}）")
+        elif registered:
+            print(f"  ✗ {names[key]}：墨迹偏 {off:+.3f}px（第 {page} 页）> {INK_TOL}px")
+            print("      已登记 --ink-dx-%s 但残差超限 —— 文案或字号变过？重跑：" % key)
+            print("      \"$SKILL/scripts/inkcenter.py\" <deck.html>   然后重跑 build.sh")
+            bad += 1
+        else:
+            print(f"  ⚠️  {names[key]}：墨迹偏 {off:+.3f}px（未登记补偿，不判死）")
+            print("      新 deck 跑一次：\"$SKILL/scripts/inkcenter.py\" <deck.html>")
+            print("      （模板/demo 的字体已被剥掉，量出来的是回退字体，忽略本条）")
     return bad
 
 
