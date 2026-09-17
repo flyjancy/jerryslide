@@ -274,6 +274,17 @@ def static_checks(src, path=None):
 
         # 已废弃的零件：页眉（.head / .kicker / .hline）2026-09-17 被标题行 .ttl 取代。
         # 老模板里它们长得像「标题」，混回来就又变成一页两个标题。
+        # 最后一页必须是收尾页（.end ＋ 正中 .qa）。讲完停在屏幕上的是它 ——
+        # 提问期间观众一直看的就是这一页，所以它有固定形态：标题「致谢」＋ Q & A。
+        last = secs[-1]
+        last_cls = re.search(r'<section class="([^"]*)"', last).group(1)
+        if "end" in last_cls and 'class="qa"' in last:
+            print("  ✓ 收尾页：.end ＋ 正中 Q & A")
+        else:
+            print(f"  ✗ 最后一页不是收尾页（class='{last_cls}'）—— 每份 deck 的最后一页"
+                  f"必须是 .end ＋ 标题「致谢」＋ 正中 .qa（RULES.md 页型表）")
+            n += 1
+
         dead = [k for k in ('class="head"', 'class="kicker"', 'class="hline"') if k in src]
         if dead:
             print(f"  ✗ 用了已废弃的页眉零件：{dead} —— 改用 .ttl（红竖块 ＋ 红 h1），"
