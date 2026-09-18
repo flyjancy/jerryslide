@@ -129,6 +129,12 @@ def main():
     print(f"       {sys.executable} {rel('setpages.py')} {out}             # 改完贴回去")
     print(f"       {rel('build.sh')} {out}")
     print("     ↑ 用 build.sh，不要分开跑 build_font.py（见 references/FAILURES.md F4）")
+    # 起手先问一句：这份 deck 会不会讲？会讲就要配讲稿，而讲稿只能对着 deck 写
+    # （稿子等讲完才发现要讲，就是对着 PDF 重抄一遍）。见 RULES §0 I5 / §7.4。
+    print("   → 先问一句：这份 deck 会不会讲？")
+    print(f"       会讲 → 写完页面后配一份 讲稿.md，再用")
+    print(f"              {sys.executable} {rel('scriptcheck.py')} {out} 讲稿.md   # 逐页对账")
+    print("             （格式与文风见 references/RULES.md §7.4）")
 
 
 if __name__ == "__main__":

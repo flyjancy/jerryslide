@@ -211,6 +211,20 @@ echo "③ 验收"
 "$VENV" "$SCRIPT_DIR/check.py" "$DECK" --pdf "$OUT"
 [ $? -eq 0 ] || exit 1
 
+# ③.5 讲稿 —— 这份 deck 要讲就有一份 讲稿.md，有就必须跟 deck 对得上。
+#      没有**不判失败**（讲稿是可选交付物，RULES §7.4），但要说一句 ——
+#      「改了标题忘了改讲稿」是静默错误：讲的人照着念，念的是别的页。
+SCRIPT_MD="$(dirname "$DECK")/讲稿.md"
+echo
+if [ -f "$SCRIPT_MD" ]; then
+  echo "③.5 讲稿对账"
+  "$VENV" "$SCRIPT_DIR/scriptcheck.py" "$DECK" "$SCRIPT_MD"
+  [ $? -eq 0 ] || exit 1
+else
+  echo "·  旁边没有 讲稿.md —— 这份 deck 要讲的话按 references/RULES.md §7.4 补一份"
+  echo "   （逐页「标题意思 ＋ 讲 ＋ 停顿」；写完用 scriptcheck.py 对账。见 RULES §0 I5）"
+fi
+
 # ④ 零件漂移 —— 查的是 template.html，所以只有给模板本身 / demo 跑才有意义。
 #    按文件名判断，不按目录 —— 安装后模板在 assets/ 里。
 case "$NAME" in

@@ -68,9 +68,12 @@ disable-model-invocation: true
 # ④ 字体 → PDF → 验收，一条命令
 "$SKILL/scripts/build.sh" 我的deck.html
 
-# ⑤ 这份 deck 要讲的话，配一份 讲稿.md 并逐页对账
+# ⑤ 会讲的 deck（起手问过，RULES §0 I5）：配一份 讲稿.md 并逐页对账
 "$SKILL/scripts/scriptcheck.py" 我的deck.html 讲稿.md
 ```
+
+**第 ⑤ 步什么时候跑**：起手时问过「这份 deck 会不会讲」（`RULES` §0 I5）——
+会讲就跑。`build.sh` 末尾也会检查：有 `讲稿.md` 就对账，没有就提示一句。
 
 **第 ⑤ 步为什么存在**：h1 是英文短语，`data-notes` 只有一句话 ——
 讲的人站在台上时需要一个**中文对照**：这页标题在说什么、我该说什么、在哪停。
